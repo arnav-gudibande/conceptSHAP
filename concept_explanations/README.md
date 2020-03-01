@@ -11,3 +11,20 @@ Networks" https://arxiv.org/abs/1910.07969".
 ipca.py is a general helper function for calculating the completeness of a given
 model, and toy_helper.py and awa_helper.py contain helper functions that are
 specific to the datasets.
+
+
+
+
+//////
+
+Installation:
+
+cd [your director]/intuit-project
+
+virtualenv -p python3 .
+source ./bin/activate
+
+cd concept_explanations
+
+pip install tensorflow
+pip install -r requirements.txt
