@@ -59,8 +59,8 @@ assert(LV(torch.__version__) >= LV("1.0.0"))
 # The ground truth consists of binary sentiments for each review:
 # positive (1) or negative (0).
 
-train_df = pd.read_pickle("/users/makoskel/imdb/imdb-train.pkl")
-test_df  = pd.read_pickle("/users/makoskel/imdb/imdb-test.pkl")
+train_df = pd.read_pickle("/srv/home/ericwallace/tonyzhaozh/Projects/intuit-project/concept_explanations/imdb-train.pkl")
+test_df  = pd.read_pickle("/srv/home/ericwallace/tonyzhaozh/Projects/intuit-project/concept_explanations/imdb-test.pkl")
 
 print('\nIMDB data loaded:')
 print('train:', train_df.shape)
