@@ -19,25 +19,34 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from absl import app
-from ipca import n0
-import toy_helper
+from concept_explanations.ipca import n, n0
+import concept_explanations.toy_helper as toy_helper
 
 
 def main(_):
   """Creates the toy dataset main."""
   # Prepares dataset
-  width, height = toy_helper.create_dataset()
+  print("creating dataset")
+  skip = True # True if you have run create_dataset once already and have the npy files in directory
+  if skip:
+    print("Skipping generation and saving of data, make sure to have x_data.npy, y_data.npy, concept_data.npy in your directory")
+  width, height = toy_helper.create_dataset(skip)
   # Loads dataset
-  x, y, concept = toy_helper.load_xyconcept()
+  print("loading dataset")
+  x, y, concept = toy_helper.load_xyconcept(n, pretrain=False)
   x_train = x[:n0, :]
   x_val = x[n0:, :]
   y_train = y[:n0, :]
   y_val = y[n0:, :]
   # Loads model
+  print("loading model")
   _, _, feature_dense_model = toy_helper.load_model(
-      x_train, y_train, x_val, y_val, pretrain=False)
+      x_train, y_train, x_val, y_val, width=300,
+               height=300, channel=3, pretrain=False)
+  print("creating feature")
   toy_helper.create_feature(x, width, height, feature_dense_model)
   # Runs after create_feature
+  print("creating cluster")
   toy_helper.create_cluster(concept)
 
 

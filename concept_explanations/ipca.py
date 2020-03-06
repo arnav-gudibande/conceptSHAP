@@ -51,6 +51,9 @@ min_weight_arr = []
 min_index_arr = []
 concept_arr = {}
 
+n = 60000  # total dataset size
+n0 = int(n * 0.8)  # training set size
+
 
 class Weight(Layer):
   """Simple Weight class."""

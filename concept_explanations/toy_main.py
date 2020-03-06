@@ -20,41 +20,48 @@ from __future__ import division
 from __future__ import print_function
 import pickle
 from absl import app
-import ipca
+import concept_explanations.ipca as ipca
 import numpy as np
-import toy_helper
+import concept_explanations.toy_helper as toy_helper
 
+# Tony condemns the human beings who wrote this code. Nobody should write shitty code like this.
 
 def main(_):
-  n_concept = 5
-  n_cluster = 5
-  n = 60000
-  n0 = int(n * 0.8)
+  n_concept = 5 # number of concepts that relate to label
+  n_cluster = 5 # each cluster is a collection of images that contains a shape
+  n = 60000 # total dataset size
+  n0 = int(n * 0.8) # training set size
 
-  pretrain = True
+  pretrain = False # whether to train the model from scratch, if not just load the model. Here they did not provide the weights, thus False
   # Loads data.
   x, y, concept = toy_helper.load_xyconcept(n, pretrain)
-  if not pretrain:
+  x_train, x_val = None, None # for aesthetic
+  if not pretrain: # if we do not have a pre-trained model
     x_train = x[:n0, :]
-    x_val = x[n0:, :]
+    x_val = x[n0:, :] # just segmenting the input data(images) to train and val
   y_train = y[:n0, :]
-  y_val = y[n0:, :]
+  y_val = y[n0:, :] # just segmenting the label
   all_feature_dense = np.load('all_feature_dense.npy')
-  f_train = all_feature_dense[:n0, :]
+  f_train = all_feature_dense[:n0, :] # feature here means theta(x): f(x) = h(theta(x)) where f() is the whole NN
   f_val = all_feature_dense[n0:, :]
   # Loads model
-  if not pretrain:
+  if not pretrain: # if we do not have it, train it
     dense2, predict, _ = toy_helper.load_model(
-        x_train, y_train, x_val, y_val, pretrain=pretrain)
+        x_train, y_train, x_val, y_val, pretrain=pretrain) # do model training
   else:
-    dense2, predict, _ = toy_helper.load_model(_, _, _, _, pretrain=pretrain)
+    dense2, predict, _ = toy_helper.load_model(_, _, _, _, pretrain=pretrain) # just load pretrained weights
   # Loads concept
-  concept_arraynew = np.load('concept_arraynew.npy')
-  concept_arraynew2 = np.load('concept_arraynew2.npy')
+  concept_arraynew = np.load('concept_arraynew.npy') # TODO here concepts shall be CLUSTERS. This line is loading ground truth clusters(shapes) "true clusters"
+  concept_arraynew2 = np.load('concept_arraynew2.npy') # TODO here concepts shall be CLUSTERS. This line is loading clusters produced by segmentation + k_means "self-discovered clusters"
+
+
+
+
+  ################ EXPERIMENT 1 ################
   # Returns discovered concepts with true clusters
   finetuned_model_pr = ipca.ipca_model(concept_arraynew2, dense2, predict,
                                        f_train, y_train, f_val, y_val,
-                                       n_concept)
+                                       n_concept) # load the algorithm of interest
   num_epoch = 5
   for _ in range(num_epoch):
     finetuned_model_pr.fit(
@@ -65,7 +72,7 @@ def main(_):
         verbose=True,
         validation_data=(f_val, y_val))
   # Evaluates groupacc and get concept_matrix
-  concept_matrix, _ = ipca.get_groupacc(
+  concept_matrix, _ = toy_helper.get_groupacc( # was ipca.get_groupacc which does not exist
       finetuned_model_pr,
       concept_arraynew2,
       f_train,
@@ -83,8 +90,12 @@ def main(_):
   segment_sp1 = np.load('segment_sp1.npy')
   feature_sp1_1000 = feature_sp1[:1000]
   segment_sp1_1000 = segment_sp1[:1000]
-  ipca.plot_nearestneighbor(concept_matrix, feature_sp1_1000, segment_sp1_1000)
+  # ipca.plot_nearestneighbor(concept_matrix, feature_sp1_1000, segment_sp1_1000)  # Tony: this function does not exist
 
+
+
+
+  ################ EXPERIMENT 2 ################
   # Discovered concepts with self-discovered clusters.
   finetuned_model_pr = ipca.ipca_model(concept_arraynew, dense2, predict,
                                        f_train, y_train, f_val, y_val,
@@ -112,8 +123,8 @@ def main(_):
   with open('concept_matrix_unsup.pickle', 'wb') as handle:
     pickle.dump(concept_matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
   # Plots nearest neighbors.
-  toy_helper.plot_nearestneighbor(concept_matrix,
-                                  feature_sp1_1000, segment_sp1_1000)
+  # toy_helper.plot_nearestneighbor(concept_matrix,  # Tony: this function does not exist
+  #                                 feature_sp1_1000, segment_sp1_1000)
 
 
 if __name__ == '__main__':
