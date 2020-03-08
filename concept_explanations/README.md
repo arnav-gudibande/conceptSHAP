@@ -64,11 +64,22 @@ source ./bin/activate
 export PYTHONPATH=$PYTHONPATH:/home/ericwallace/tonyzhaozh/Projects/intuit-project
 cd concept_explanations/
 
-CUDA_VISIBLE_DEVICES=0 python3 create_toy.py
+CUDA_VISIBLE_DEVICES=3 python3 create_toy.py
+CUDA_VISIBLE_DEVICES=3 python3 toy_main.py
+
+
+# side note: create_toy will use 100G memory
 
 <!--export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-10.1/lib64/-->
 <!--export PATH=$PATH:/usr/local/cuda/bin/-->
 
 <!--export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/local/lib:/usr/lib64-->
 
+# to train imdb:
+
+pip install torch
+pip install pytorch_transformers
+pip install seaborn
+
+CUDA_VISIBLE_DEVICES=1 python3 bert-imdb.py
 

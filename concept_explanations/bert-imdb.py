@@ -318,6 +318,9 @@ for epoch in range(1, EPOCHS + 1):
     print('\nValidation set:')
     evaluate(validation_dataloader)
 
+    # added by Tony
+    print("saving model")
+    torch.save(model.state_dict(), 'imdb_model_epoch_' + str(epoch) + '.pth')
 
 # Let's take a look at our training loss over all batches:
 

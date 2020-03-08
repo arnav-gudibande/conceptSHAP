@@ -32,8 +32,9 @@ def main(_):
   n = 60000 # total dataset size
   n0 = int(n * 0.8) # training set size
 
-  pretrain = False # whether to train the model from scratch, if not just load the model. Here they did not provide the weights, thus False
+  pretrain = True # whether to train the model from scratch, if not just load the model. Here they did not provide the weights, thus False
   # Loads data.
+  print("Loading x, y, concept")
   x, y, concept = toy_helper.load_xyconcept(n, pretrain)
   x_train, x_val = None, None # for aesthetic
   if not pretrain: # if we do not have a pre-trained model
@@ -41,24 +42,29 @@ def main(_):
     x_val = x[n0:, :] # just segmenting the input data(images) to train and val
   y_train = y[:n0, :]
   y_val = y[n0:, :] # just segmenting the label
+
+  print("Loading all_feature_dense")
   all_feature_dense = np.load('all_feature_dense.npy')
   f_train = all_feature_dense[:n0, :] # feature here means theta(x): f(x) = h(theta(x)) where f() is the whole NN
   f_val = all_feature_dense[n0:, :]
   # Loads model
+  print("Loading model")
   if not pretrain: # if we do not have it, train it
     dense2, predict, _ = toy_helper.load_model(
-        x_train, y_train, x_val, y_val, pretrain=pretrain) # do model training
+        x_train, y_train, x_val, y_val, width=300, height=300, channel=3, pretrain=pretrain) # do model training
   else:
-    dense2, predict, _ = toy_helper.load_model(_, _, _, _, pretrain=pretrain) # just load pretrained weights
+    dense2, predict, _ = toy_helper.load_model(_, _, _, _, width=300, height=300, channel=3, pretrain=pretrain) # just load pretrained weights
   # Loads concept
-  concept_arraynew = np.load('concept_arraynew.npy') # TODO here concepts shall be CLUSTERS. This line is loading ground truth clusters(shapes) "true clusters"
-  concept_arraynew2 = np.load('concept_arraynew2.npy') # TODO here concepts shall be CLUSTERS. This line is loading clusters produced by segmentation + k_means "self-discovered clusters"
+  print("Loading concept")
+  concept_arraynew = np.load('concept_arraynew.npy') # TODO here concepts shall be concept CANDIDATES. This line is loading ground truth clusters(shapes) "true clusters"
+  concept_arraynew2 = np.load('concept_arraynew2.npy') # TODO here concepts shall be concept CANDIDATES. This line is loading clusters produced by segmentation + k_means "self-discovered clusters"
 
 
 
 
   ################ EXPERIMENT 1 ################
   # Returns discovered concepts with true clusters
+  print("starting experiment 1")
   finetuned_model_pr = ipca.ipca_model(concept_arraynew2, dense2, predict,
                                        f_train, y_train, f_val, y_val,
                                        n_concept) # load the algorithm of interest
@@ -86,10 +92,10 @@ def main(_):
   with open('concept_matrix_sup.pickle', 'wb') as handle:
     pickle.dump(concept_matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
   # Plots nearest neighbors
-  feature_sp1 = np.load('feature_sp1.npy')
-  segment_sp1 = np.load('segment_sp1.npy')
-  feature_sp1_1000 = feature_sp1[:1000]
-  segment_sp1_1000 = segment_sp1[:1000]
+  # feature_sp1 = np.load('feature_sp1.npy')
+  # segment_sp1 = np.load('segment_sp1.npy')
+  # feature_sp1_1000 = feature_sp1[:1000]
+  # segment_sp1_1000 = segment_sp1[:1000]
   # ipca.plot_nearestneighbor(concept_matrix, feature_sp1_1000, segment_sp1_1000)  # Tony: this function does not exist
 
 
@@ -97,6 +103,7 @@ def main(_):
 
   ################ EXPERIMENT 2 ################
   # Discovered concepts with self-discovered clusters.
+  print("Starting experiment 2")
   finetuned_model_pr = ipca.ipca_model(concept_arraynew, dense2, predict,
                                        f_train, y_train, f_val, y_val,
                                        n_concept)

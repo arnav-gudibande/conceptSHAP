@@ -566,7 +566,7 @@ def create_feature(x, width, height, feature_dense_model):
     if i % 1000 == 0:
       print('{} embeddings are created'.format(i))
     img = x[i, :, :, :]
-    _ = plt.imshow(img)
+    # _ = plt.imshow(img)
     # plt.show()
     segments_fz = felzenszwalb(img, scale=100, sigma=.2, min_size=50)
     segments = len(np.unique(segments_fz))
@@ -583,7 +583,7 @@ def create_feature(x, width, height, feature_dense_model):
   feature_sp = feature_sp[:end, :]
   all_feature_dense = feature_dense_model.predict(x)
   with open('group_array.pickle', 'wb') as handle:
-    pickle.dump(group_array, handle, protocol=pickle.highest_protocol)
+    pickle.dump(group_array, handle, protocol=pickle.HIGHEST_PROTOCOL)
   np.save('all_feature_dense.npy', all_feature_dense)
   np.save('feature_sp.npy', feature_sp)
 

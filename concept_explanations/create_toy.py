@@ -40,9 +40,10 @@ def main(_):
   y_val = y[n0:, :]
   # Loads model
   print("loading model")
+  trained = True # change to True if "conv_s13.h5" already exist in directory
   _, _, feature_dense_model = toy_helper.load_model(
       x_train, y_train, x_val, y_val, width=300,
-               height=300, channel=3, pretrain=False)
+               height=300, channel=3, pretrain=trained)
   print("creating feature")
   toy_helper.create_feature(x, width, height, feature_dense_model)
   # Runs after create_feature
