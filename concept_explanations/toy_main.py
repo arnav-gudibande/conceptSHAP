@@ -23,6 +23,8 @@ from absl import app
 import concept_explanations.ipca as ipca
 import numpy as np
 import concept_explanations.toy_helper as toy_helper
+import IPython
+e = IPython.embed
 
 # Tony condemns the human beings who wrote this code. Nobody should write shitty code like this.
 
@@ -32,7 +34,7 @@ def main(_):
   n = 60000 # total dataset size
   n0 = int(n * 0.8) # training set size
 
-  pretrain = True # whether to train the model from scratch, if not just load the model. Here they did not provide the weights, thus False
+  pretrain = True # whether to train the model from scratch, if your directory has 'conv_s13.h5', then True
   # Loads data.
   print("Loading x, y, concept")
   x, y, concept = toy_helper.load_xyconcept(n, pretrain)
@@ -56,8 +58,8 @@ def main(_):
     dense2, predict, _ = toy_helper.load_model(_, _, _, _, width=300, height=300, channel=3, pretrain=pretrain) # just load pretrained weights
   # Loads concept
   print("Loading concept")
-  concept_arraynew = np.load('concept_arraynew.npy') # TODO here concepts shall be concept CANDIDATES. This line is loading ground truth clusters(shapes) "true clusters"
-  concept_arraynew2 = np.load('concept_arraynew2.npy') # TODO here concepts shall be concept CANDIDATES. This line is loading clusters produced by segmentation + k_means "self-discovered clusters"
+  concept_arraynew = np.load('concept_arraynew.npy') # WARNING: here "concepts" actually mean CLUSTERS. This line is loading ground truth clusters(shapes) "true clusters"
+  concept_arraynew2 = np.load('concept_arraynew2.npy') # WARNING: here "concepts" actually mean CLUSTERS. This line is loading clusters produced by segmentation + k_means "self-discovered clusters"
 
 
 
@@ -67,9 +69,9 @@ def main(_):
   print("starting experiment 1")
   finetuned_model_pr = ipca.ipca_model(concept_arraynew2, dense2, predict,
                                        f_train, y_train, f_val, y_val,
-                                       n_concept) # load the algorithm of interest
+                                       n_concept)
   num_epoch = 5
-  for _ in range(num_epoch):
+  for _ in range(num_epoch): ### after warm-start, train with FULL OBJECTIVE (completeness + regularization)
     finetuned_model_pr.fit(
         f_train,
         y_train,
@@ -78,7 +80,7 @@ def main(_):
         verbose=True,
         validation_data=(f_val, y_val))
   # Evaluates groupacc and get concept_matrix
-  concept_matrix, _ = toy_helper.get_groupacc( # was ipca.get_groupacc which does not exist
+  concept_matrix, _ = toy_helper.get_groupacc( # TODO get evaluation scores. Have not looked into it in detail, might be important for our own reference when tuning params
       finetuned_model_pr,
       concept_arraynew2,
       f_train,
@@ -88,21 +90,17 @@ def main(_):
       n_cluster,
       n0,
       verbose=False)
+
+  # WE GOT THE CONCEPT as "concept_matrix" which has shape (200, 5) which is (activation_dim, num_concepts)
+
   # Saves concept matrix
   with open('concept_matrix_sup.pickle', 'wb') as handle:
     pickle.dump(concept_matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
-  # Plots nearest neighbors
-  # feature_sp1 = np.load('feature_sp1.npy')
-  # segment_sp1 = np.load('segment_sp1.npy')
-  # feature_sp1_1000 = feature_sp1[:1000]
-  # segment_sp1_1000 = segment_sp1[:1000]
-  # ipca.plot_nearestneighbor(concept_matrix, feature_sp1_1000, segment_sp1_1000)  # Tony: this function does not exist
-
 
 
 
   ################ EXPERIMENT 2 ################
-  # Discovered concepts with self-discovered clusters.
+  # Discovered concepts with self-discovered clusters. The rest is exactly the same as experiment 1
   print("Starting experiment 2")
   finetuned_model_pr = ipca.ipca_model(concept_arraynew, dense2, predict,
                                        f_train, y_train, f_val, y_val,
@@ -129,9 +127,6 @@ def main(_):
   # Saves concept matrix.
   with open('concept_matrix_unsup.pickle', 'wb') as handle:
     pickle.dump(concept_matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
-  # Plots nearest neighbors.
-  # toy_helper.plot_nearestneighbor(concept_matrix,  # Tony: this function does not exist
-  #                                 feature_sp1_1000, segment_sp1_1000)
 
 
 if __name__ == '__main__':

@@ -69,6 +69,8 @@ def load_xyconcept(n, pretrain):
   y[:, 12] = np.bitwise_xor(concept[:, 1], concept[:, 2])
   y[:, 13] = (1 - (concept[:, 0] * concept[:, 4] + concept[:, 3])) > 0
   y[:, 14] = np.bitwise_xor(concept[:, 4], concept[:, 3])
+  # Tony's note: This is how they generate labels for images. Notice only the first 5 concepts out of 15 is used
+  # and the y is 15 dimensional
   if not pretrain:
     x = np.load('x_data.npy') / 255.0
     return x, y, concept
@@ -471,7 +473,7 @@ def create_dataset(skip, n_sample=60000):
 
 def get_groupacc(finetuned_model_pr, concept_arraynew2, f_train, f_val, concept,
                  n_concept, n_cluster, n0, verbose):
-  """Gets the group accuracy for dicovered concepts."""
+  """Gets the group accuracy for discovered concepts."""
   print(finetuned_model_pr.summary())
   min_weight = finetuned_model_pr.layers[-5].get_weights()[0]
   sim_array = np.zeros((n_cluster, n_concept))
