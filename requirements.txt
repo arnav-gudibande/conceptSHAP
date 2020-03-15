@@ -28,3 +28,7 @@ tensorflow-estimator==1.13.0
 tensorflow-gpu==1.13.1 # if GPU machine
 #tensorflow==1.13.1 # if do not have GPU
 tensorflow-hub==0.4.0
+transformers==2.5.1
+torch==1.4.0
+seaborn==0.10.0
+torchvision==0.5.0

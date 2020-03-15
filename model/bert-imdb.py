@@ -18,9 +18,9 @@ import torch
 from torch.utils.data import (TensorDataset, DataLoader,
                               RandomSampler, SequentialSampler)
 
-from pytorch_transformers import BertTokenizer, BertConfig
-from pytorch_transformers import BertForSequenceClassification
-from pytorch_transformers import AdamW, WarmupLinearSchedule
+from transformers import BertTokenizer, BertConfig
+from transformers import BertForSequenceClassification
+from transformers import AdamW
 
 from distutils.version import LooseVersion as LV
 
@@ -238,8 +238,7 @@ optimizer_grouped_parameters = [
      'weight_decay': 0.0}
 ]
 optimizer = AdamW(optimizer_grouped_parameters, lr=LR, eps=1e-8)
-scheduler = WarmupLinearSchedule(optimizer, warmup_steps=WARMUP_STEPS,
-                                 t_total=len(train_dataloader)*EPOCHS)
+scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=WARMUP_STEPS, num_training_steps=-1)
 
 # LEARNING
 
