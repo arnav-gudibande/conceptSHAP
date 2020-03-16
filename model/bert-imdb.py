@@ -15,21 +15,18 @@
 # **Note that using a GPU with this script is highly recommended.**
 
 import torch
+import pandas as pd
+import numpy as np
+
 from torch.utils.data import (TensorDataset, DataLoader,
                               RandomSampler, SequentialSampler)
 
 from transformers import BertTokenizer, BertConfig
 from transformers import BertForSequenceClassification
-from transformers import AdamW
-
+from transformers import AdamW, get_linear_schedule_with_warmup
 from distutils.version import LooseVersion as LV
-
 from sklearn.model_selection import train_test_split
 
-import io
-
-import pandas as pd
-import numpy as np
 
 import matplotlib
 matplotlib.use('Agg')
@@ -319,7 +316,7 @@ for epoch in range(1, EPOCHS + 1):
 
     # added by Tony
     print("saving model")
-    torch.save(model.state_dict(), 'imdb_model_epoch_' + str(epoch) + '.pth')
+    torch.save(model.state_dict(), 'checkpoints/imdb_model_epoch_' + str(epoch) + '.pth')
 
 # Let's take a look at our training loss over all batches:
 
