@@ -606,8 +606,7 @@ def create_cluster(concept):
   # Returns concepts found in unsupervised way.
   for i in range(20):
     print(i)
-    concept_arraynew[i, :] = all_feature_dense[:10000, :][concept_new[:, i] ==
-                                                          1, :][:300, :]
+    concept_arraynew[i, :] = all_feature_dense[:10000, :][concept_new[:, i] == 1, :][:300, :]
   concept_arraynew2 = np.zeros((15, 300, 200))
 
   # Returns concepts found in supervised way.
