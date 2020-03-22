@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class ConceptModel(nn.Module):
 
-    def __init__(self, clusters, decoder, train_embeddings,
-                 train_labels, validation_embeddings,
-                 validation_labels, n_concepts, epochs=20):
+    def __init__(self, clusters, h_x, n_concepts):
 
         super(ConceptModel, self).__init__()
 
@@ -15,32 +14,39 @@ class ConceptModel(nn.Module):
         self.clusters = nn.Parameter(torch.tensor(clusters))
         self.clusters.requires_grad = False
 
-        concept = self.init_concept(embedding_dim, n_concepts)
-        self.V = nn.Parameter(concept)
-        self.V_norm = nn.Parameter(nn.functional.normalize(concept))
+        # random init using uniform dist
+        self.concept = nn.Parameter(self.init_concept(n_concepts, embedding_dim)) # the trainable concept
 
-        # TODO: eye -> softmax_pr
+        self.h_x = h_x # final layers of the transformer
+        self.n_concepts = n_concepts
 
-    def init_concept(self, embedding_dim, n_concepts):
-        '''
-        :param n_concepts: number of concepts
-        :return: concept: uniformly distributed tensor of size (embedding_dim, n_concepts)
-        '''
+    def init_concept(self, n_concepts, embedding_dim):
         r_1 = -0.5
         r_2 = 0.5
-        concept = (r_2 - r_1) * torch.rand(embedding_dim, n_concepts) + r_1
+        concept = (r_2 - r_1) * torch.rand(n_concepts, embedding_dim) + r_1
         return concept
-
-
-    def forward(self):
-        pass
 
     def concept_loss(self):
         pass
 
-    def concept_variance(self):
-        pass
+    def forward(self, train_embedding, train_label, validation_embedding, validation_label):
 
-    def tensor_variance(self):
-        pass
+        concept_normalized = F.normalize(self.concept, p=2, dim=0)
 
+        # calculating projection of train_embedding onto the concept vector space
+        eye = torch.eye(self.n_concepts) * 1e-5
+        first_half_proj_matrix = \
+            torch.dot(self.concept, torch.inverse(torch.dot(torch.t(self.concept), self.concept) + eye))
+        proj = torch.dot(torch.dot(train_embedding, first_half_proj_matrix), torch.t(self.concept))
+
+        # calculating the saliency score between the concept and the cluster
+        score_numerator = torch.dot(torch.mean(self.clusters, dim=1), concept_normalized)
+        score_numerator_normalized = torch.sub(score_numerator, torch.mean(score_numerator, dim=1, keepdim=True))
+        score_abs = torch.abs(F.normalize(score_numerator_normalized, p=2, dim=0))
+        score_flat = torch.reshape(score_abs, (-1, self.n_concepts))
+        saliency_score = torch.dot(torch.t(score_flat), score_flat)
+
+        # passing projected activations through rest of model
+        output = self.h_x(proj)
+
+        # TODO: calculate and return concept loss
