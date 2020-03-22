@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class ConceptModel(nn.Module):
+class ConceptNet(nn.Module):
 
     def __init__(self, clusters, h_x, n_concepts):
 
-        super(ConceptModel, self).__init__()
+        super(ConceptNet, self).__init__()
 
         # note: clusters.shape = (num_clusters, num_sentences_per_cluster, embedding_dim)
         embedding_dim = clusters.shape[2]
@@ -26,10 +26,15 @@ class ConceptModel(nn.Module):
         concept = (r_2 - r_1) * torch.rand(n_concepts, embedding_dim) + r_1
         return concept
 
-    def concept_loss(self):
-        pass
+    def concept_loss(self, y_true, y_pred, saliency_score, score_abs):
+        loss = nn.BCEWithLogitsLoss()
+        output = loss(y_pred, y_true)
 
-    def forward(self, train_embedding, train_label, validation_embedding, validation_label):
+        # TODO: add concept-sparsity regularization
+
+        return output
+
+    def forward(self, train_embedding):
 
         concept_normalized = F.normalize(self.concept, p=2, dim=0)
 
@@ -49,4 +54,6 @@ class ConceptModel(nn.Module):
         # passing projected activations through rest of model
         output = self.h_x(proj)
 
-        # TODO: calculate and return concept loss
+        concept_loss = self.concept_loss(train_embedding, output, saliency_score, score_abs)
+
+        return concept_loss
