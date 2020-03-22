@@ -145,3 +145,4 @@ static
 
 # checkpoint files
 *.pth
+model/imdb_weights

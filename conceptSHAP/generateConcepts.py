@@ -36,3 +36,12 @@ def train(train_embeddings, clusters, h_x, n_concepts):
                 state_dict[key] = state_dict[key].to(torch.device('cpu'))
                 torch.save(state_dict, save_dir /
                        'conceptSHAP_iter_{:d}.pth'.format(i + 1))
+
+if __name__ == "__main__":
+    import sys
+    sys.path.insert(0, '../')
+    from model import bert_inference
+
+    result, embedding = bert_inference.get_sentence_activation()
+
+    # TODO: add testing
