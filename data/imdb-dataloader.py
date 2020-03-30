@@ -31,6 +31,29 @@ def download():
 
     return train_df, test_df
 
+def make_sliding_window_pkl():
+  data = pd.read_csv('imdb.csv', encoding='latin-1')
+  #data['review'][0], see a review
+  indicies = []
+  windows = []
+  labels = []
+
+  for i in range(25):
+      split_review = data['review'][i].split()
+      label = data['sentiment'][i]
+      for j in range(10, len(split_review)):
+          sliding_window = split_review[j-10:j]
+          #print(sliding_window)
+          windows.append(sliding_window)
+          labels.append(label)
+
+  indicies = [i for i in range(len(windows))]
+  d = {'index': indicies, 'sentence': windows, 'label': labels}
+
+  df = pd.DataFrame(data=d)
+  df.to_pickle("./sentenes.pkl")
+
+
 if __name__ == "__main__":
     train_df, test_df = download()
     train_df.to_pickle('imdb-train.pkl')
