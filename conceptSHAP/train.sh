@@ -1,3 +1,5 @@
+#!/bin/bash
+
 python3 train_eval.py \
     --activation_dir="../data/small_activations.npy" \
     --cluster_dir="../data/small_clusters.npy" \

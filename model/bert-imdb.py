@@ -307,6 +307,11 @@ def evaluate(loader):
 # function. After each epoch, we evaluate the model using the
 # validation set and evaluate().
 
+# Temporal PATH = './'
+PATH = './'
+ckpt_path = os.path.join(PATH, "imdb_weights")
+model.save_pretrained(ckpt_path)
+
 train_lossv = []
 for epoch in range(1, EPOCHS + 1):
     print()
@@ -316,7 +321,8 @@ for epoch in range(1, EPOCHS + 1):
 
     # added by Tony
     print("saving model")
-    torch.save(model.state_dict(), 'checkpoints/imdb_model_epoch_' + str(epoch) + '.pth')
+    model.save_pretrained(ckpt_path)
+    # torch.save(model.state_dict(), 'checkpoints/imdb_model_epoch_' + str(epoch) + '.pth')
 
 # Let's take a look at our training loss over all batches:
 

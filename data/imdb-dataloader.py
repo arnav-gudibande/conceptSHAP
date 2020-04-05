@@ -4,6 +4,7 @@ from tensorflow import keras
 import os
 import re
 import IPython
+import argparse
 
 # Load all files from a directory in a DataFrame.
 def load_directory_data(directory):
@@ -24,37 +25,44 @@ def load_dataset(directory):
   neg_df["polarity"] = 0
   return pd.concat([pos_df, neg_df]).sample(frac=1).reset_index(drop=True)
 
-def download():
-    directory = "./imdb"
+def download(args):
+    directory = args.download_dir
     train_df = load_dataset(directory + "/train")
     test_df = load_dataset(directory + "/test")
 
     return train_df, test_df
 
-def make_sliding_window_pkl():
-  data = pd.read_csv('imdb.csv', encoding='latin-1')
+def make_sliding_window_pkl(dir):
+  data = pd.read_pickle(dir + '.pkl')
   #data['review'][0], see a review
-  indicies = []
   windows = []
   labels = []
 
   for i in range(25):
-      split_review = data['review'][i].split()
-      label = data['sentiment'][i]
+      split_review = data.sentence.values[i].split()
+      label = data.polarity.values[i]
       for j in range(10, len(split_review)):
           sliding_window = split_review[j-10:j]
           #print(sliding_window)
           windows.append(sliding_window)
           labels.append(label)
 
-  indicies = [i for i in range(len(windows))]
-  d = {'index': indicies, 'sentence': windows, 'label': labels}
+  indices = [i for i in range(len(windows))]
+  d = {"index": indices, "sentence": windows, "polarity": labels}
 
-  df = pd.DataFrame(data=d)
-  df.to_pickle("./sentenes.pkl")
+  df = pd.DataFrame.from_dict(d)
+  df.to_pickle(dir + "-sentences.pkl")
 
 
 if __name__ == "__main__":
-    train_df, test_df = download()
-    train_df.to_pickle('imdb-train.pkl')
-    test_df.to_pickle('imdb-test.pkl')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--download_dir", type=str, default="./imdb",
+                        help="path to original imdb data files")
+    args = parser.parse_args()
+
+    train_df, test_df = download(args)
+    train_df.to_pickle('./imdb-train.pkl')
+    test_df.to_pickle('./imdb-test.pkl')
+
+    make_sliding_window_pkl('./imdb-train')
+    make_sliding_window_pkl('./imdb-test')

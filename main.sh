@@ -1,16 +1,20 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=1
-python3 train.py \
-	--activation_dir="../data/small_activations.npy" \
-    --cluster_dir="../data/small_clusters.npy" \
-    --train_dir="../data/sentences_small.pkl" \
-    --bert_weights="../model/imdb_weights" \
-    --n_concepts=5 \
-    --save_dir="./experiments" \
-    --log_dir="./logs" \
-    --lr=1e-3 \
-    --batch_size=32 \
-    --num_epochs=200 \
-    --loss_reg_epoch=5 \
-    --save_interval=50
+
+# Call the dataloader to pre-process and do sliding windows
+python3 data/imdb-dataloader.py
+
+# Train BERT model on imdb data sets
+# TODO: SSH to server port (TensorBoard) to plot the training curve
+python3 model/bert-imdb.py
+
+# Extract mid-layer activations
+# TODO: Figure out the correct DATAPATH and SAVEPATH
+python3 model/bert_inference.py
+
+# Create clusters
+python3 clustering/generateClusters.py
+
+# Rest of conceptSHAP
+sh conceptSHAP/train.sh
