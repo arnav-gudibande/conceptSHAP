@@ -1,4 +1,4 @@
-python3 train.py \
+python3 train_eval.py \
     --activation_dir="../data/small_activations.npy" \
     --cluster_dir="../data/small_clusters.npy" \
     --train_dir="../data/sentences_small.pkl" \

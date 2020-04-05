@@ -9,6 +9,8 @@ import argparse
 from tensorboardX import SummaryWriter
 from pathlib import Path
 
+from conceptSHAP.interpretConcepts import eval_clusters, eval_concepts
+
 def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts):
   '''
   :param train_embeddings: tensor of sentence embeddings => (# of examples, embedding_dim)
@@ -73,6 +75,7 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts):
   writer.close()
   return model, losses
 
+
 if __name__ == "__main__":
 
   parser = argparse.ArgumentParser()
@@ -110,6 +113,10 @@ if __name__ == "__main__":
     device = torch.device('cpu')
     devicename = ""
 
+
+  ###############################
+  # Preparing data
+  ###############################
   # Load assets
   print("Loading dataset embeddings...")
   small_activations = np.load(args.activation_dir)
@@ -149,6 +156,25 @@ if __name__ == "__main__":
   # n_concepts
   n_concepts = args.n_concepts  # param
 
+  # data_frame
+  data_frame = small_df
+
+
+  ###############################
+  # Training model
+  ###############################
   # init training
   concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts)
+
+
+  ###############################
+  # Interpretation of results
+  ###############################
+  # evaluate clusters
+  cluster_sentiments = eval_clusters(clusters, train_embeddings, train_y_true, data_frame)
+
+  # evaluate concepts
+  concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
+  concepts, saliency = eval_concepts(concept_model, clusters, cluster_sentiments, concept_idxs, train_embeddings, data_frame)
+
 
