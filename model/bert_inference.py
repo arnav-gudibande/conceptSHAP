@@ -27,10 +27,8 @@ def load_data(PATH):
 
 def load_model(PATH):
 
-  # NOTE/TODO: this could be the wrong filename configuration within the model folder
-
   config = BertConfig.from_pretrained(PATH + "/imdb_weights/config.json", output_hidden_states=True)
-  bert_model = BertForSequenceClassification.from_pretrained(PATH + "/imdb_weights/pytorch_model.bin",config=new_config)
+  bert_model = BertForSequenceClassification.from_pretrained(PATH + "/imdb_weights/pytorch_model.bin",config=config)
 
   # possibly redundant
   bert_model.cuda()
@@ -101,22 +99,7 @@ def run_model(_model, loader):
 """Notice here: the function above added a forward hook to "layer_idx" layer of our model. You might want to google "register_forward_hook" to fully understand it but in short, everytime something is fed into the model and through the layer we specified, the function "extract_activation_hook" will get called. And "extract_activation_hook" will save the layer output to EXTRACTED_ACTIVATIONS when RECORD is true."""
 MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
 
-
-
-EXTRACTED_ACTIVATIONS = []
-RECORD = False
-
-def extract_activation_hook(module, input, output):
-  if RECORD:
-    EXTRACTED_ACTIVATIONS.append(output)
-
-def add_activation_hook(model, layer_idx):
-  all_modules_list = list(model.modules())
-  module = all_modules_list[layer_idx]
-  module.register_forward_hook(extract_activation_hook)
  
-
-
 ######################################################
 # ALL STEPS PUT TOGETHER
 ######################################################
@@ -131,6 +114,18 @@ def get_sentence_activation(DATAPATH, MODELPATH):
   model, tokenizer = load_model(MODELPATH)
 
   loader = process_dataframe(sentence_df, tokenizer)
+
+  EXTRACTED_ACTIVATIONS = []
+  RECORD = False
+
+  def extract_activation_hook(module, input, output):
+    if RECORD:
+      EXTRACTED_ACTIVATIONS.append(output)
+
+  def add_activation_hook(model, layer_idx):
+    all_modules_list = list(model.modules())
+    module = all_modules_list[layer_idx]
+    module.register_forward_hook(extract_activation_hook)
 
   add_activation_hook(model, layer_idx=-2)
 
@@ -148,6 +143,7 @@ def save_activations(activations, DATAPATH):
   outfile = open(os.path.join(DATAPATH,'small_activations.pkl'), 'wb') 
   pickle.dump(activations, outfile)
   outfile.close()
+
 
 
 '''
