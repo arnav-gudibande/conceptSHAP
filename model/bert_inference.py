@@ -16,7 +16,7 @@ device = torch.device('cuda')
 # OUT: movie review sentences as a pandas dataframe with 0 polarity for every datapoint
 
 def load_data(PATH)
-  small_df = pd.read_pickle(os.path.join(PATH,"Data/sentences_small.pkl"))
+  small_df = pd.read_pickle(os.path.join(PATH,"data/sentences_small.pkl"))
   small_df["polarity"] = small_df.shape[0] * [0] 
   return small_df
 
@@ -26,6 +26,8 @@ def load_data(PATH)
 # OUT: loaded model and sentence tokenizer object
 
 def load_model(PATH)
+
+  # NOTE/TODO: this could be the wrong filename configuration within the model folder
 
   config = BertConfig.from_pretrained(PATH + "/imdb_weights/config.json", output_hidden_states=True)
   bert_model = BertForSequenceClassification.from_pretrained(PATH + "/imdb_weights/pytorch_model.bin",config=new_config)
