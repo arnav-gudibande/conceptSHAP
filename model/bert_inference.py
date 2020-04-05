@@ -15,7 +15,7 @@ device = torch.device('cuda')
 # IN: filepath to directory where the movie review dataset is stored
 # OUT: movie review sentences as a pandas dataframe with 0 polarity for every datapoint
 
-def load_data(PATH)
+def load_data(PATH):
   small_df = pd.read_pickle(os.path.join(PATH,"data/sentences_small.pkl"))
   small_df["polarity"] = small_df.shape[0] * [0] 
   return small_df
@@ -25,7 +25,7 @@ def load_data(PATH)
 # IN: filepath to directory where the model weights are stored
 # OUT: loaded model and sentence tokenizer object
 
-def load_model(PATH)
+def load_model(PATH):
 
   # NOTE/TODO: this could be the wrong filename configuration within the model folder
 
