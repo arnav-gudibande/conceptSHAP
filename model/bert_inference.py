@@ -128,7 +128,7 @@ def get_sentence_activation(DATAPATH, MODELPATH):
 
   sentence_df = load_data(DATAPATH)
 
-  model, tokenizer = lead_model(MODELPATH)
+  model, tokenizer = load_model(MODELPATH)
 
   loader = process_dataframe(sentence_df, tokenizer)
 
