@@ -54,12 +54,12 @@ def eval_concepts(concept_model, clusters, cluster_sentiment, concept_idxs, acti
 
   for concept_idx in concept_idxs:
     # evaluate the concept of interest
-    print(f"\n\nlooking at concept {concept_idx}, with good sentiment ratio {cluster_sentiment[concept_idx]}")
-    concepts = concepts[:, concept_idx]
-    concepts = np.expand_dims(concepts, axis=0) # (1, activation_dim)
+    print(f"\n\nlooking at concept {concept_idx}")
+    concept = concepts[:, concept_idx]
+    concept = np.expand_dims(concept, axis=0) # (1, activation_dim)
 
     # find nearest neighbour of concept in small activations
-    diff = np.abs(activations - concepts)
+    diff = np.abs(activations - concept)
     distance = np.linalg.norm(diff, axis=1) # shape (dataset_size,)
 
     k = 20 # number of nearest neighbours to choose

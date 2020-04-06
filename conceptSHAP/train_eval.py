@@ -9,9 +9,9 @@ import argparse
 from tensorboardX import SummaryWriter
 from pathlib import Path
 
-from conceptSHAP.interpretConcepts import eval_clusters, eval_concepts
+from interpretConcepts import eval_clusters, eval_concepts
 
-def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts):
+def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, device):
   '''
   :param train_embeddings: tensor of sentence embeddings => (# of examples, embedding_dim)
   :param train_y_true: the ground truth label for each of the embeddings => (# of examples)
@@ -26,6 +26,9 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts):
   batch_size = args.batch_size
   epochs = args.num_epochs
   save_interval = args.save_interval
+  clusters = torch.from_numpy(clusters).to(device)
+  train_embeddings = torch.from_numpy(train_embeddings).to(device)
+  train_y_true = torch.from_numpy(train_y_true).to(device)
   model = ConceptNet(clusters, h_x, n_concepts).cuda()
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
@@ -140,15 +143,12 @@ if __name__ == "__main__":
   print("Init training...\n")
   # get the embedding numpy array, convert to tensor
   train_embeddings = small_activations  # (4012, 768)
-  train_embeddings = torch.from_numpy(train_embeddings).to(device)
 
   # get the cluster numpy array
   clusters = small_clusters
-  clusters = torch.from_numpy(clusters).to(device)
 
   # get ground truth label
   train_y_true = senti_list
-  train_y_true = torch.from_numpy(train_y_true).to(device)
 
   # h_x
   h_x = list(bert_model.modules())[-1]
@@ -164,8 +164,7 @@ if __name__ == "__main__":
   # Training model
   ###############################
   # init training
-  concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts)
-
+  concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, device)
 
   ###############################
   # Interpretation of results
@@ -176,5 +175,3 @@ if __name__ == "__main__":
   # evaluate concepts
   concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
   concepts, saliency = eval_concepts(concept_model, clusters, cluster_sentiments, concept_idxs, train_embeddings, data_frame)
-
-

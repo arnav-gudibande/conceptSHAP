@@ -10,6 +10,6 @@ python3 train_eval.py \
     --log_dir="./logs" \
     --lr=1e-3 \
     --batch_size=32 \
-    --num_epochs=200 \
+    --num_epochs=20 \
     --loss_reg_epoch=5 \
     --save_interval=50

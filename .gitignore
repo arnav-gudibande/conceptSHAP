@@ -146,3 +146,4 @@ static
 # checkpoint files
 *.pth
 model/imdb_weights
+conceptsSHAP/logs
