@@ -2,8 +2,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 from collections import Counter
 
-EMBEDDING_PATH = '../data/small_activations.npy'
-SAVE_PATH = '../data/small_clusters.npy'
+EMBEDDING_PATH = '../data/medium_activations.npy'
+SAVE_PATH = '../data/medium_clusters.npy'
 
 def generate_clusters(path, num_clusters):
 
