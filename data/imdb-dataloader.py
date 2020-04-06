@@ -32,13 +32,13 @@ def download(args):
 
     return train_df, test_df
 
-def make_sliding_window_pkl(dir):
-  data = pd.read_pickle(dir + '.pkl')
+def make_sliding_window_pkl(size, dir):
+  data = pd.read_pickle(dir)
   #data['review'][0], see a review
   windows = []
   labels = []
 
-  for i in range(25):
+  for i in range(size):
       split_review = data.sentence.values[i].split()
       label = data.polarity.values[i]
       for j in range(10, len(split_review)):
@@ -51,18 +51,20 @@ def make_sliding_window_pkl(dir):
   d = {"index": indices, "sentence": windows, "polarity": labels}
 
   df = pd.DataFrame.from_dict(d)
-  df.to_pickle(dir + "-sentences.pkl")
+  df.to_pickle("sentence_fragments")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--download_dir", type=str, default="./imdb",
                         help="path to original imdb data files")
+    parser.add_argument("--size", type=int, default=5000,
+                        help="how many training and test sentences to run fragment extraction on")
     args = parser.parse_args()
 
-    train_df, test_df = download(args)
+    train_df, test_df = download(args.download_dir)
     train_df.to_pickle('./imdb-train.pkl')
     test_df.to_pickle('./imdb-test.pkl')
 
-    make_sliding_window_pkl('./imdb-train')
-    make_sliding_window_pkl('./imdb-test')
+    make_sliding_window_pkl(args.size, './imdb-train.pkl')
+    make_sliding_window_pkl(args.size, './imdb-test.pkl')

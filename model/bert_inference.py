@@ -145,7 +145,6 @@ def save_activations(activations, DATAPATH):
   outfile.close()
 
 
-
 '''
 
 """# Sanity checks on trained model"""
