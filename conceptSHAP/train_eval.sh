@@ -1,9 +1,9 @@
 #!/bin/bash
 
 python3 train_eval.py \
-    --activation_dir="../data/small_activations.npy" \
-    --cluster_dir="../data/small_clusters.npy" \
-    --train_dir="../data/sentences_small.pkl" \
+    --activation_dir="../data/medium_activations.npy" \
+    --cluster_dir="../data/medium_clusters.npy" \
+    --train_dir="../data/sentences_medium.pkl" \
     --bert_weights="../model/imdb_weights" \
     --n_concepts=5 \
     --save_dir="./experiments" \

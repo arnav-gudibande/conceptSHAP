@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python3 bert_inference.py \
-    --batch_size=256 \
-    --activation_dir="../data/medium_activations.npy" \
-    --train_dir="../data/sentences_medium.pkl" \
+    --batch_size=1 \
+    --activation_dir="../data/large_activations.npy" \
+    --train_dir="../data/large_sentences.pkl" \
     --bert_weights="imdb_weights"
