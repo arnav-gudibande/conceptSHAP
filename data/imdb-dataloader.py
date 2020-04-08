@@ -1,9 +1,7 @@
 import tensorflow as tf
 import pandas as pd
-from tensorflow import keras
 import os
 import re
-import IPython
 import argparse
 
 # Load all files from a directory in a DataFrame.
@@ -32,7 +30,7 @@ def download(args):
 
     return train_df, test_df
 
-def make_sliding_window_pkl(size, dir):
+def make_sliding_window_pkl(size, dir, savedir):
   data = pd.read_pickle(dir)
   #data['review'][0], see a review
   windows = []
@@ -43,7 +41,6 @@ def make_sliding_window_pkl(size, dir):
       label = data.polarity.values[i]
       for j in range(10, len(split_review)):
           sliding_window = split_review[j-10:j]
-          #print(sliding_window)
           windows.append(sliding_window)
           labels.append(label)
 
@@ -51,20 +48,30 @@ def make_sliding_window_pkl(size, dir):
   d = {"index": indices, "sentence": windows, "polarity": labels}
 
   df = pd.DataFrame.from_dict(d)
-  df.to_pickle("sentence_fragments")
-
+  df.to_pickle(savedir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--download_dir", type=str, default="./imdb",
+    parser.add_argument("--download_dir", type=str, default="imdb",
                         help="path to original imdb data files")
-    parser.add_argument("--size", type=int, default=5000,
+    parser.add_argument("--size", type=int, default=1000,
                         help="how many training and test sentences to run fragment extraction on")
+    parser.add_argument("--run_option", type=int, default=2,
+                        help="3 for download, 2 for sliding window, 1 for both")
+    parser.add_argument("--train_dir", type=str, default="sentence_fragments.pkl",
+                        help="path to save extracted sentence fragments")
     args = parser.parse_args()
+    run_option = args.run_option
 
-    train_df, test_df = download(args.download_dir)
-    train_df.to_pickle('./imdb-train.pkl')
-    test_df.to_pickle('./imdb-test.pkl')
-
-    make_sliding_window_pkl(args.size, './imdb-train.pkl')
-    make_sliding_window_pkl(args.size, './imdb-test.pkl')
+    if run_option == 3:
+        train_df, test_df = download(args.download_dir)
+        train_df.to_pickle('./imdb-train.pkl')
+        test_df.to_pickle('./imdb-test.pkl')
+        make_sliding_window_pkl(args.size, './imdb-train.pkl')
+        make_sliding_window_pkl(args.size, './imdb-test.pkl')
+    elif run_option == 2:
+        make_sliding_window_pkl(args.size, './imdb-train.pkl', args.train_dir)
+    else:
+        train_df, test_df = download(args.download_dir)
+        train_df.to_pickle('./imdb-train.pkl')
+        test_df.to_pickle('./imdb-test.pkl')

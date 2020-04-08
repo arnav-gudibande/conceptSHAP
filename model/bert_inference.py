@@ -1,12 +1,12 @@
 import torch
 from torch.utils.data import (TensorDataset, DataLoader, SequentialSampler)
-from transformers import BertTokenizer
+from transformers import BertTokenizer, BertConfig
 from transformers import BertForSequenceClassification
 
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
-
-import os
+import argparse
 
 device = torch.device('cuda')
 
@@ -16,7 +16,7 @@ device = torch.device('cuda')
 # OUT: movie review sentences as a pandas dataframe with 0 polarity for every datapoint
 
 def load_data(PATH):
-  small_df = pd.read_pickle(os.path.join(PATH,"data/sentences_small.pkl"))
+  small_df = pd.read_pickle(PATH)
   small_df["polarity"] = small_df.shape[0] * [0] 
   return small_df
 
@@ -27,8 +27,8 @@ def load_data(PATH):
 
 def load_model(PATH):
 
-  config = BertConfig.from_pretrained(PATH + "/imdb_weights/config.json", output_hidden_states=True)
-  bert_model = BertForSequenceClassification.from_pretrained(PATH + "/imdb_weights/pytorch_model.bin",config=config)
+  config = BertConfig.from_pretrained(PATH + "/config.json", output_hidden_states=True)
+  bert_model = BertForSequenceClassification.from_pretrained(PATH + "/pytorch_model.bin", config=config)
 
   # possibly redundant
   bert_model.cuda()
@@ -45,7 +45,7 @@ def load_model(PATH):
 # IN: dataframe of sentences, bert tokenizer
 # OUT: dataloader
 
-def process_dataframe(_dframe, _tokenizer):
+def process_dataframe(_dframe, _tokenizer, batch_size):
 
   sentences = _dframe.sentence.values
   sentences = [["[CLS]"] + s for s in sentences]
@@ -74,7 +74,7 @@ def process_dataframe(_dframe, _tokenizer):
   data = TensorDataset(inputs_reformatted, masks_reformatted, labels_reformatted)
   sampler = SequentialSampler(data)
 
-  dataloader = DataLoader(data, sampler=sampler, batch_size=1)
+  dataloader = DataLoader(data, sampler=sampler, batch_size=batch_size)
   
   return dataloader
 
@@ -85,7 +85,7 @@ def process_dataframe(_dframe, _tokenizer):
 
 def run_model(_model, loader):
 
-  for batch in loader:
+  for batch in tqdm(loader):
     batch = tuple(t.to(device) for t in batch)
     b_input_ids, b_input_mask, b_labels = batch
 
@@ -107,20 +107,18 @@ MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
 # IN: filepath to data directory, filepath to model weights
 # OUT: embeddings
 
-def get_sentence_activation(DATAPATH, MODELPATH):
+def get_sentence_activation(DATAPATH, MODELPATH, batch_size):
 
   sentence_df = load_data(DATAPATH)
 
   model, tokenizer = load_model(MODELPATH)
 
-  loader = process_dataframe(sentence_df, tokenizer)
+  loader = process_dataframe(sentence_df, tokenizer, batch_size)
 
-  EXTRACTED_ACTIVATIONS = []
-  RECORD = False
+  extracted_activations = []
 
-  def extract_activation_hook(module, input, output):
-    if RECORD:
-      EXTRACTED_ACTIVATIONS.append(output)
+  def extract_activation_hook(model, input, output):
+    extracted_activations.append(output.cpu().numpy()[0])
 
   def add_activation_hook(model, layer_idx):
     all_modules_list = list(model.modules())
@@ -129,67 +127,30 @@ def get_sentence_activation(DATAPATH, MODELPATH):
 
   add_activation_hook(model, layer_idx=-2)
 
-  RECORD=True
-  result = run_model(model, loader) # run the whole model
-  RECORD=False
+  print("running inference..")
+  run_model(model, loader) # run the whole model
 
-  return result, EXTRACTED_ACTIVATIONS[-1]
+  return np.array(extracted_activations)
 
 
 # IN: filepath to data directory, embeddings/activations
-# OUT: side effect = writing the activations to a .pkl file
+# OUT: side effect = writing the activations to a .npy file
 
 def save_activations(activations, DATAPATH):
-  outfile = open(os.path.join(DATAPATH,'small_activations.pkl'), 'wb') 
-  pickle.dump(activations, outfile)
-  outfile.close()
+  np.save(DATAPATH, activations)
 
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
 
-'''
+    # Required parameters
+    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--activation_dir", type=str, required=True,
+                        help="dir of .npy file to save dataset embeddings")
+    parser.add_argument("--train_dir", type=str, required=True,
+                        help="path to .pkl file containing train preprocessed dataset")
+    parser.add_argument("--bert_weights", type=str, required=True,
+                        help="path to BERT config & weights directory")
+    args = parser.parse_args()
 
-"""# Sanity checks on trained model"""
-
-# sanity checks
-
-
-MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
-test_sentence = {}
-test_sentence["sentence"] = ["This movie is great"]
-train_df = pd.DataFrame.from_dict(test_sentence)
-train_df["polarity"] = [0]
-loader = process_dataframe(train_df, tokenizer)
-
-print(run_model(model, loader))
-
-MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
-test_sentence = {}
-test_sentence["sentence"] = ["This movie is awesome"]
-train_df = pd.DataFrame.from_dict(test_sentence)
-train_df["polarity"] = [0]
-loader = process_dataframe(train_df, tokenizer)
-
-print(run_model(model, loader))
-
-MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
-test_sentence = {}
-test_sentence["sentence"] = ["This movie is shit"]
-train_df = pd.DataFrame.from_dict(test_sentence)
-train_df["polarity"] = [0]
-loader = process_dataframe(train_df, tokenizer)
-
-print(run_model(model, loader))
-
-MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
-test_sentence = {}
-test_sentence["sentence"] = ["This movie is messed up"]
-train_df = pd.DataFrame.from_dict(test_sentence)
-train_df["polarity"] = [0]
-loader = process_dataframe(train_df, tokenizer)
-
-print(run_model(model, loader))
-
-
-print("the result make sense. Trained model shall be loaded successfully")
-
-'''
-
+    result = get_sentence_activation(args.train_dir, args.bert_weights, args.batch_size)
+    save_activations(result, args.activation_dir)

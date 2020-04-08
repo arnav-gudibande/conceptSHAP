@@ -1,6 +1,5 @@
 import torch
 from conceptNet import ConceptNet
-import os
 import numpy as np
 import pandas as pd
 from transformers import BertForSequenceClassification
@@ -132,7 +131,7 @@ if __name__ == "__main__":
   print("Loading dataset labels...")
   small_df = pd.read_pickle(args.train_dir)
   small_df["polarity"] = small_df.shape[0] * [0]
-  senti_list = list(small_df['label'])
+  senti_list = list(small_df["polarity"])
   senti_list = [1 if i == "positive" else 0 for i in senti_list]
   senti_list = np.array(senti_list)
 

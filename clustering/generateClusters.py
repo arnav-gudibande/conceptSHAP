@@ -1,9 +1,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
 from collections import Counter
-
-EMBEDDING_PATH = '../data/small_activations.npy'
-SAVE_PATH = '../data/small_clusters.npy'
+import argparse
 
 def generate_clusters(path, num_clusters):
 
@@ -34,5 +32,16 @@ def generate_clusters(path, num_clusters):
 
 if __name__=="__main__":
 
-    clusters = generate_clusters(EMBEDDING_PATH, 5)
-    np.save(SAVE_PATH, clusters)
+    parser = argparse.ArgumentParser()
+
+    # Required dependencies
+    parser.add_argument("--activation_dir", type=str, required=True,
+                        help="path to .npy file containing dataset embeddings")
+    parser.add_argument("--cluster_dir", type=str, required=True,
+                        help="path to .npy file to save embedding clusters")
+    parser.add_argument("--n_concepts", type=int, default=5,
+                        help="number of concepts to generate")
+    args = parser.parse_args()
+
+    clusters = generate_clusters(args.activation_dir, args.n_concepts)
+    np.save(args.cluster_dir, clusters)
