@@ -6,9 +6,6 @@ from transformers import BertForSequenceClassification
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-import pickle
-
-import os
 
 device = torch.device('cuda')
 

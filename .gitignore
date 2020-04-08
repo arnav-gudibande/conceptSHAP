@@ -147,3 +147,4 @@ static
 *.pth
 model/imdb_weights
 conceptsSHAP/logs
+*.npy
