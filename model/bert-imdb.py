@@ -307,7 +307,7 @@ def evaluate(loader):
 # function. After each epoch, we evaluate the model using the
 # validation set and evaluate().
 
-# Temporal PATH = './'
+# TODO: Temporal PATH = './'; write the name == "main"
 PATH = './'
 ckpt_path = os.path.join(PATH, "imdb_weights")
 model.save_pretrained(ckpt_path)
