@@ -1,6 +1,5 @@
 import torch
 from conceptNet import ConceptNet
-import os
 import numpy as np
 import pandas as pd
 from transformers import BertForSequenceClassification

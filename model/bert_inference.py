@@ -6,6 +6,7 @@ from transformers import BertForSequenceClassification
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+import argparse
 
 device = torch.device('cuda')
 
@@ -44,7 +45,7 @@ def load_model(PATH):
 # IN: dataframe of sentences, bert tokenizer
 # OUT: dataloader
 
-def process_dataframe(_dframe, _tokenizer):
+def process_dataframe(_dframe, _tokenizer, batch_size):
 
   sentences = _dframe.sentence.values
   sentences = [["[CLS]"] + s for s in sentences]
@@ -73,7 +74,7 @@ def process_dataframe(_dframe, _tokenizer):
   data = TensorDataset(inputs_reformatted, masks_reformatted, labels_reformatted)
   sampler = SequentialSampler(data)
 
-  dataloader = DataLoader(data, sampler=sampler, batch_size=1)
+  dataloader = DataLoader(data, sampler=sampler, batch_size=batch_size)
   
   return dataloader
 
@@ -106,13 +107,13 @@ MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
 # IN: filepath to data directory, filepath to model weights
 # OUT: embeddings
 
-def get_sentence_activation(DATAPATH, MODELPATH):
+def get_sentence_activation(DATAPATH, MODELPATH, batch_size):
 
   sentence_df = load_data(DATAPATH)
 
   model, tokenizer = load_model(MODELPATH)
 
-  loader = process_dataframe(sentence_df, tokenizer)
+  loader = process_dataframe(sentence_df, tokenizer, batch_size)
 
   extracted_activations = []
 
@@ -139,5 +140,17 @@ def save_activations(activations, DATAPATH):
   np.save(DATAPATH, activations)
 
 if __name__=="__main__":
-    result = get_sentence_activation('../data/sentences_medium.pkl', 'imdb_weights')
-    save_activations(result, '../data/medium_activations.npy')
+    parser = argparse.ArgumentParser()
+
+    # Required parameters
+    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument("--activation_dir", type=str, required=True,
+                        help="dir of .npy file to save dataset embeddings")
+    parser.add_argument("--train_dir", type=str, required=True,
+                        help="path to .pkl file containing train preprocessed dataset")
+    parser.add_argument("--bert_weights", type=str, required=True,
+                        help="path to BERT config & weights directory")
+    args = parser.parse_args()
+
+    result = get_sentence_activation(args.train_dir, args.bert_weights, args.batch_size)
+    save_activations(result, args.activation_dir)
