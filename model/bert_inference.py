@@ -143,7 +143,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
     # Required parameters
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--activation_dir", type=str, required=True,
                         help="dir of .npy file to save dataset embeddings")
     parser.add_argument("--train_dir", type=str, required=True,

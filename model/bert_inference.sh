@@ -1,7 +1,13 @@
 #!/bin/bash
 
+# Parse arguments
+batchSize="$1"
+trainDir="$2"
+modelDir="$3"
+activationDir="$4"
+
 python3 bert_inference.py \
-    --batch_size=1 \
-    --activation_dir="../data/large_activations.npy" \
-    --train_dir="../data/large_sentences.pkl" \
-    --bert_weights="imdb_weights"
+    --batch_size=$batchSize \
+    --activation_dir=$activationDir \
+    --train_dir=$trainDir \
+    --bert_weights=$modelDir
