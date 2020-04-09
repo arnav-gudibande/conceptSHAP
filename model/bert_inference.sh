@@ -6,7 +6,7 @@ trainDir="$2"
 modelDir="$3"
 activationDir="$4"
 
-python3 bert_inference.py \
+python3 model/bert_inference.py \
     --batch_size=$batchSize \
     --activation_dir=$activationDir \
     --train_dir=$trainDir \
