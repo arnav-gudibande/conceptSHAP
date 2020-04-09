@@ -7,6 +7,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import argparse
+import IPython
 
 device = torch.device('cuda')
 
@@ -95,7 +96,6 @@ def run_model(_model, loader):
                         attention_mask=b_input_mask)
 
 
-
 """Notice here: the function above added a forward hook to "layer_idx" layer of our model. You might want to google "register_forward_hook" to fully understand it but in short, everytime something is fed into the model and through the layer we specified, the function "extract_activation_hook" will get called. And "extract_activation_hook" will save the layer output to EXTRACTED_ACTIVATIONS when RECORD is true."""
 MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
 
@@ -118,7 +118,7 @@ def get_sentence_activation(DATAPATH, MODELPATH, batch_size):
   extracted_activations = []
 
   def extract_activation_hook(model, input, output):
-    extracted_activations.append(output.cpu().numpy()[0])
+    extracted_activations.append(output.cpu().numpy())
 
   def add_activation_hook(model, layer_idx):
     all_modules_list = list(model.modules())
@@ -130,7 +130,8 @@ def get_sentence_activation(DATAPATH, MODELPATH, batch_size):
   print("running inference..")
   run_model(model, loader) # run the whole model
 
-  return np.array(extracted_activations)
+  #IPython.embed()
+  return np.concatenate(extracted_activations, axis=0)
 
 
 # IN: filepath to data directory, embeddings/activations

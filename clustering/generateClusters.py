@@ -39,9 +39,9 @@ if __name__=="__main__":
                         help="path to .npy file containing dataset embeddings")
     parser.add_argument("--cluster_dir", type=str, required=True,
                         help="path to .npy file to save embedding clusters")
-    parser.add_argument("--n_concepts", type=int, default=5,
+    parser.add_argument("--n_clusters", type=int, default=5,
                         help="number of concepts to generate")
     args = parser.parse_args()
 
-    clusters = generate_clusters(args.activation_dir, args.n_concepts)
+    clusters = generate_clusters(args.activation_dir, args.n_clusters)
     np.save(args.cluster_dir, clusters)
