@@ -63,15 +63,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run_option = args.run_option
 
-    if run_option == 3:
+    if run_option == 1 or run_option == 3:
         train_df, test_df = download(args.download_dir)
         train_df.to_pickle('./imdb-train.pkl')
         test_df.to_pickle('./imdb-test.pkl')
-        make_sliding_window_pkl(args.size, './imdb-train.pkl')
-        make_sliding_window_pkl(args.size, './imdb-test.pkl')
-    elif run_option == 2:
+    if run_option == 1 or run_option == 2:
         make_sliding_window_pkl(args.size, './imdb-train.pkl', args.train_dir)
-    else:
-        train_df, test_df = download(args.download_dir)
-        train_df.to_pickle('./imdb-train.pkl')
-        test_df.to_pickle('./imdb-test.pkl')

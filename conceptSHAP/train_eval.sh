@@ -1,15 +1,28 @@
 #!/bin/bash
 
-python3 train_eval.py \
-    --activation_dir="../data/medium_activations.npy" \
-    --cluster_dir="../data/medium_clusters.npy" \
-    --train_dir="../data/sentences_medium.pkl" \
-    --bert_weights="../model/imdb_weights" \
-    --n_concepts=5 \
-    --save_dir="./experiments" \
-    --log_dir="./logs" \
-    --lr=1e-3 \
-    --batch_size=32 \
-    --num_epochs=20 \
-    --loss_reg_epoch=5 \
-    --save_interval=50
+activationDir="$1"
+clusterDir="$2"
+trainDir="$3"
+modelDir="$4"
+numConcepts="$5"
+conceptSHAPModelDir="$6"
+logDir="$7"
+lr="$8"
+batchSize="$9"
+numEpochs="${10}"
+lossRegEpoch="${11}"
+saveInterval="${12}"
+
+python3 conceptSHAP/train_eval.py \
+    --activation_dir=$activationDir \
+    --cluster_dir=$clusterDir \
+    --train_dir=$trainDir \
+    --bert_weights=$modelDir \
+    --n_concepts=$numConcepts \
+    --save_dir=$conceptSHAPModelDir \
+    --log_dir=$logDir \
+    --lr=$lr \
+    --batch_size=$batchSize \
+    --num_epochs=$numEpochs \
+    --loss_reg_epoch=$lossRegEpoch \
+    --save_interval=$saveInterval

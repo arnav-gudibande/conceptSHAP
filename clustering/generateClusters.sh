@@ -1,6 +1,10 @@
 #!/bin/bash
 
-python3 generateClusters.py \
-    --activation_dir="../data/medium_activations.npy" \
-    --cluster_dir="../data/medium_clusters.npy" \
-    --n_concepts=5
+numConcepts="$1"
+clusterDir="$2"
+activationDir="$3"
+
+python3 clustering/generateClusters.py \
+    --activation_dir=$activationDir \
+    --cluster_dir=$clusterDir \
+    --n_concepts=$numConcepts
