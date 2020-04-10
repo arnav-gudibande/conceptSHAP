@@ -44,7 +44,7 @@ def eval_clusters(clusters, activations, senti_list, df):
 
   return cluster_sentiment
 
-def eval_concepts(concept_model, clusters, cluster_sentiment, concept_idxs, activations, df):
+def eval_concepts(concept_model, clusters, concept_idxs, activations, df):
   concepts = concept_model.concept.detach().cpu().numpy() # (activation_dim, num_concepts)
   clusters_mean = np.mean(clusters, axis=1) # (num_clusters, activation_dim)
   # TODO shall we normalize both concept and cluster vectors to norm=1?

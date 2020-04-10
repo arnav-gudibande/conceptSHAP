@@ -172,8 +172,8 @@ if __name__ == "__main__":
   # Interpretation of results
   ###############################
   # evaluate clusters
-  cluster_sentiments = eval_clusters(clusters, train_embeddings, train_y_true, data_frame)
+  #cluster_sentiments = eval_clusters(clusters, train_embeddings, train_y_true, data_frame)
 
   # evaluate concepts
   concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
-  concepts, saliency = eval_concepts(concept_model, clusters, cluster_sentiments, concept_idxs, train_embeddings, data_frame)
+  concepts, saliency = eval_concepts(concept_model, clusters, concept_idxs, train_embeddings, data_frame)
