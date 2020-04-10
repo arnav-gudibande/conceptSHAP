@@ -34,24 +34,35 @@ lossRegEpoch=5  # number of epochs to run without loss regularization
 saveInterval=5
 
 
-# Handle the imdb data set and the pre-processing
-sh data/imdb-dataloader.sh $isDownloaded $downloadedPath $size $runOption $trainDir
+# Read command line running option
+# six option flags available: 1 for "data preprocess", 2 for "BERT model training",
+# 3 for "activation extraction", 4 for "clustering", 5 for "conceptSHAP", and 0 for "running all parts"
+option="$1"
 
+if [ $option -eq 1 ] || [ $option -eq 0 ]; then
+    # Handle the imdb data set and the pre-processing
+    sh data/imdb-dataloader.sh $isDownloaded $downloadedPath $size $runOption $trainDir
+fi
 
-# Train BERT model on imdb data sets
-# TODO: SSH to server port (TensorBoard) to plot the training curve
-python3 model/bert-imdb.py --model_dir=$modelDir
+if [ $option -eq 2 ] || [ $option -eq 0 ]; then
+    # Train BERT model on imdb data sets
+    # TODO: SSH to server port (TensorBoard) to plot the training curve
+    sh model/bert-imdb.sh $modelDir $trainDataDir $testDataDir
+fi
 
+if [ $option -eq 3 ] || [ $option -eq 0 ]; then
+    # Extract mid-layer activations
+    sh model/bert_inference.sh $batchSize $trainDir $modelDir $activationDir
+fi
 
-# Extract mid-layer activations
-sh model/bert_inference.sh $batchSize $trainDir $modelDir $activationDir
+if [ $option -eq 4 ] || [ $option -eq 0 ]; then
+    # Create clusters
+    sh clustering/generateClusters.sh $n_clusters $clusterDir $activationDir
+fi
 
-
-# Create clusters
-sh clustering/generateClusters.sh $n_clusters $clusterDir $activationDir
-
-
-# Rest of conceptSHAP
-# TODO: SSH to server port (TensorBoard) to plot the training curve
-sh conceptSHAP/train_eval.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
-    $conceptSHAPModelDir $logDir $lr $batchSize $numEpochs $lossRegEpoch $saveInterval
+if [ $option -eq 5 ] || [ $option -eq 0 ]; then
+    # Rest of conceptSHAP
+    # TODO: SSH to server port (TensorBoard) to plot the training curve
+    sh conceptSHAP/train_eval.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
+        $conceptSHAPModelDir $logDir $lr $batchSize $numEpochs $lossRegEpoch $saveInterval
+fi
