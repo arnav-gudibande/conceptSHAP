@@ -35,7 +35,7 @@ def eval_clusters(clusters, activations, senti_list, df):
 
 
   cluster_sentiment = np.count_nonzero(cluster_labels, axis=1) / (cluster_labels.shape[1])
-  print(f"good sentiment ratio for each of {len(cluster_sentiment)} clusters:")
+  print("good sentiment ratio for each of", len(cluster_sentiment), "clusters:")
   print(cluster_sentiment)
 
   cluster_idx = 0
@@ -54,7 +54,7 @@ def eval_concepts(concept_model, clusters, cluster_sentiment, concept_idxs, acti
 
   for concept_idx in concept_idxs:
     # evaluate the concept of interest
-    print(f"\n\nlooking at concept {concept_idx}")
+    print("\n\nlooking at concept", concept_idx)
     concept = concepts[:, concept_idx]
     concept = np.expand_dims(concept, axis=0) # (1, activation_dim)
 
@@ -65,7 +65,7 @@ def eval_concepts(concept_model, clusters, cluster_sentiment, concept_idxs, acti
     k = 20 # number of nearest neighbours to choose
     near_idxs = distance.argsort()[:k]  # take first k when ranking from smallest dist to largest
 
-    print(f"top {k} nearest neighbours of concept {concept_idx}")
+    print("top", k, " nearest neighbours of concept", concept_idx)
     for idx in near_idxs:
       s = list2str(df["sentence"][idx])
       print(s)
@@ -81,7 +81,7 @@ def list2str(l):
   return s
 
 def print_cluster(df, clusters_idx, which_cluster, n=20):
-  print(f"picking first {n} sentences from cluster {which_cluster}\n")
+  print("picking first", n, "sentences from cluster", which_cluster)
   for idx in clusters_idx[which_cluster][:n]:
     s = list2str(df["sentence"][idx])
     print(idx, s)

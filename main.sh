@@ -9,7 +9,7 @@ batchSize=64
 isDownloaded=0  # whether we already have the data
 downloadedPath="data/imdb"  # path to the directory of original data
 size=1000  # number of training sentences to run fragment extractions on
-runOption=2  # 1 for both, 2 for sliding window, 3 for download
+runOption=1  # 1 for both, 2 for sliding window, 3 for download
 trainDir="data/sentence_fragments.pkl"  # sliding window data for extracting inference
 
 # Model saving arguments
@@ -19,10 +19,11 @@ modelDir="model/imdb_weights"  # better to make an empty directory just for the 
 activationDir="data/activations.npy"  # dir of .npy file to save dataset embeddings
 
 # Clustering arguments
-numConcepts=5
+n_clusters=7
 clusterDir="data/clusters.npy"  # path to clustering results
 
 # ConceptSHAP arguments
+numConcepts=5
 conceptSHAPModelDir="conceptSHAP/models"  # saving directory for conceptSHAP model
 logDir="conceptSHAP/logs"
 lr=1e-3
@@ -45,7 +46,7 @@ sh model/bert_inference.sh $batchSize $trainDir $modelDir $activationDir
 
 
 # Create clusters
-sh clustering/generateClusters.sh $numConcepts $clusterDir $activationDir
+sh clustering/generateClusters.sh $n_clusters $clusterDir $activationDir
 
 
 # Rest of conceptSHAP
