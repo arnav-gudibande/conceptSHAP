@@ -143,6 +143,8 @@ cython_debug/
 media
 static
 
+*.DS_Store
+
 # checkpoint files
 *.pth
 model/imdb_weights
