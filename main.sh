@@ -6,10 +6,10 @@ CUDA_VISIBLE_DEVICES=1
 batchSize=64
 
 # Preprocess arguments
-isDownloaded=0  # whether we already have the data
+isDownloaded=0  # whether we already have the data; if set to 0, the script will download the data automatically
 downloadedPath="data/imdb"  # path to the directory of original data
 size=1000  # number of training sentences to run fragment extractions on
-runOption=1  # 1 for both, 2 for sliding window, 3 for download
+runOption=1  # 1 for both, 2 for getting sentence fragments, 3 for storing the train/test pickles to train BERT
 trainDir="data/sentence_fragments.pkl"  # sliding window data for extracting inference
 
 # Model saving arguments
