@@ -1,4 +1,8 @@
-python3 train_eval.py \
+cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project
+source venv/bin/activate
+
+cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/conceptSHAP
+CUDA_VISIBLE_DEVICES=2 python3 train_eval.py \
     --activation_dir="../data/medium_activations.npy" \
     --cluster_dir="../data/medium_clusters.npy" \
     --train_dir="../data/medium_sentences.pkl" \
@@ -13,8 +17,8 @@ python3 train_eval.py \
     --save_interval=50
 
 
-
-CUDA_VISIBLE_DEVICES=1,2 python3 bert_inference.py \
+cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/model
+CUDA_VISIBLE_DEVICES=1 python3 bert_inference.py \
     --batch_size=256 \
     --activation_dir="../data/medium_activations_speed_test.npy" \
     --train_dir="../data/medium_sentences.pkl" \
