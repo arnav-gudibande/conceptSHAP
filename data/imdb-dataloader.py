@@ -23,8 +23,7 @@ def load_dataset(directory):
   neg_df["polarity"] = 0
   return pd.concat([pos_df, neg_df]).sample(frac=1).reset_index(drop=True)
 
-def download(args):
-    directory = args.download_dir
+def download(directory):
     train_df = load_dataset(directory + "/train")
     test_df = load_dataset(directory + "/test")
 
@@ -65,7 +64,7 @@ if __name__ == "__main__":
 
     if run_option == 1 or run_option == 3:
         train_df, test_df = download(args.download_dir)
-        train_df.to_pickle('./imdb-train.pkl')
-        test_df.to_pickle('./imdb-test.pkl')
+        train_df.to_pickle('data/imdb-train.pkl')
+        test_df.to_pickle('data/imdb-test.pkl')
     if run_option == 1 or run_option == 2:
-        make_sliding_window_pkl(args.size, './imdb-train.pkl', args.train_dir)
+        make_sliding_window_pkl(args.size, 'data/imdb-train.pkl', args.train_dir)

@@ -106,8 +106,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_dir", type=str, required=True,
                         help="path to save the model to")
+    parser.add_argument("--train_data", type=str, required=True,
+                        help="path to the training data for the entire BERT model")
+    parser.add_argument("--test_data", type=str, required=True,
+                        help="path to the test data for BERT")
     args = parser.parse_args()
     ckpt_path = args.model_dir
+    train_path = args.train_data
+    test_path = args.test_data
 
     sns.set()
     matplotlib.use('Agg')
@@ -133,8 +139,8 @@ if __name__ == "__main__":
     # The ground truth consists of binary sentiments for each review:
     # positive (1) or negative (0).
 
-    train_df = pd.read_pickle("../data/imdb-train.pkl")
-    test_df = pd.read_pickle("../data/imdb-test.pkl")
+    train_df = pd.read_pickle(train_path)
+    test_df = pd.read_pickle(test_path)
 
     print('\nIMDB data loaded:')
     print('train:', train_df.shape)

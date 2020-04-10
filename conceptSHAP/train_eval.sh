@@ -14,13 +14,13 @@ lossRegEpoch="${11}"
 saveInterval="${12}"
 
 python3 conceptSHAP/train_eval.py \
-    --activation_dir=$activationDir \
-    --cluster_dir=$clusterDir \
-    --train_dir=$trainDir \
-    --bert_weights=$modelDir \
+    --activation_dir="$activationDir" \
+    --cluster_dir="$clusterDir" \
+    --train_dir="$trainDir" \
+    --bert_weights="$modelDir" \
     --n_concepts=$numConcepts \
-    --save_dir=$conceptSHAPModelDir \
-    --log_dir=$logDir \
+    --save_dir="$conceptSHAPModelDir" \
+    --log_dir="$logDir" \
     --lr=$lr \
     --batch_size=$batchSize \
     --num_epochs=$numEpochs \
