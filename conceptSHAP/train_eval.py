@@ -9,6 +9,9 @@ from tensorboardX import SummaryWriter
 from pathlib import Path
 
 from interpretConcepts import eval_clusters, eval_concepts
+import os
+import IPython
+e = IPython.embed
 
 def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, device):
   '''

@@ -9,7 +9,7 @@ batchSize=64
 isDownloaded=0  # whether we already have the data
 downloadedPath="data/imdb"  # path to the directory of original data
 size=1000  # number of training sentences to run fragment extractions on
-runOption=2  # 1 for both, 2 for sliding window, 3 for download
+runOption=1  # 1 for both, 2 for sliding window, 3 for download
 trainDir="data/sentence_fragments.pkl"  # sliding window data for extracting inference
 
 # Model saving arguments
@@ -34,35 +34,24 @@ lossRegEpoch=5  # number of epochs to run without loss regularization
 saveInterval=5
 
 
-# Read command line running option
-# six option flags available: 1 for "data preprocess", 2 for "BERT model training",
-# 3 for "activation extraction", 4 for "clustering", 5 for "conceptSHAP", and 0 for "running all parts"
-option="$1"
+# Handle the imdb data set and the pre-processing
+sh data/imdb-dataloader.sh $isDownloaded $downloadedPath $size $runOption $trainDir
 
-if [ $option -eq 1 ] || [ $option -eq 0 ]; then
-    # Handle the imdb data set and the pre-processing
-    sh data/imdb-dataloader.sh $isDownloaded $downloadedPath $size $runOption $trainDir
-fi
 
-if [ $option -eq 2 ] || [ $option -eq 0 ]; then
-    # Train BERT model on imdb data sets
-    # TODO: SSH to server port (TensorBoard) to plot the training curve
-    sh model/bert-imdb.sh $modelDir $trainDataDir $testDataDir
-fi
+# Train BERT model on imdb data sets
+# TODO: SSH to server port (TensorBoard) to plot the training curve
+python3 model/bert-imdb.py --model_dir=$modelDir
 
-if [ $option -eq 3 ] || [ $option -eq 0 ]; then
-    # Extract mid-layer activations
-    sh model/bert_inference.sh $batchSize $trainDir $modelDir $activationDir
-fi
 
-if [ $option -eq 4 ] || [ $option -eq 0 ]; then
-    # Create clusters
-    sh clustering/generateClusters.sh $n_clusters $clusterDir $activationDir
-fi
+# Extract mid-layer activations
+sh model/bert_inference.sh $batchSize $trainDir $modelDir $activationDir
 
-if [ $option -eq 5 ] || [ $option -eq 0 ]; then
-    # Rest of conceptSHAP
-    # TODO: SSH to server port (TensorBoard) to plot the training curve
-    sh conceptSHAP/train_eval.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
-        $conceptSHAPModelDir $logDir $lr $batchSize $numEpochs $lossRegEpoch $saveInterval
-fi
+
+# Create clusters
+sh clustering/generateClusters.sh $n_clusters $clusterDir $activationDir
+
+
+# Rest of conceptSHAP
+# TODO: SSH to server port (TensorBoard) to plot the training curve
+sh conceptSHAP/train_eval.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
+    $conceptSHAPModelDir $logDir $lr $batchSize $numEpochs $lossRegEpoch $saveInterval
