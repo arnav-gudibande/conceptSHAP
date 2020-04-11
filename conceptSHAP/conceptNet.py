@@ -46,19 +46,23 @@ class ConceptNet(nn.Module):
         cluster_mean = torch.mean(self.clusters, dim=1).type(concept_normalized.dtype) # (n_clusters x embedding_dim)
         score_matrix = torch.abs(cluster_mean @ concept_normalized) # (n_clusters x n_concepts)
         score_norm = F.normalize(score_matrix, p=2, dim=0) # (n_clusters x n_concepts)
-        score_norm_2 = torch.pow(score_norm, 2).fill_diagonal_(0)
+
+        L_sparse_1 = torch.sum(score_norm)  # maximize this
+        L_sparse_2 = 0 # minimize this
+
+        for i in range(self.n_concepts):
+            for j in range(self.n_concepts):
+                if i != j: L_sparse_2 += torch.dot(score_norm[:, i], score_norm[:, j])
 
         # score_flat = torch.reshape(score_norm, (-1,)) # ((n_clusters * n_concepts) x 1)
         # saliency_score = score_flat.T @ score_flat
-
-        L_sparse_1, L_sparse_2 = torch.sum(score_norm), torch.sum(score_norm_2)
 
         # passing projected activations through rest of model
         y_pred = self.h_x(proj.T)
 
         return y_pred, L_sparse_1, L_sparse_2
 
-    def loss(self, train_embedding, train_y_true, regularize=False, l=5.):
+    def loss(self, train_embedding, train_y_true, regularize=False, l_1=5, l_2=5):
         """
         This function will be called externally to feed data and get the loss
         :param train_embedding:
@@ -76,6 +80,6 @@ class ConceptNet(nn.Module):
         if regularize:
             # reg_loss_1 = torch.mean(saliency_score - torch.eye(self.n_concepts))
             # reg_loss_2 = torch.mean(score_abs)
-            return loss_val + l * (L_sparse_1 + L_sparse_2)
+            return loss_val + (l_1 * L_sparse_1) + (l_2 * L_sparse_2)
         else:
             return loss_val

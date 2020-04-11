@@ -57,7 +57,7 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
       # generate training batch
       train_embeddings_narrow = train_embeddings.narrow(0, batch_start, batch_end - batch_start)
       train_y_true_narrow = train_y_true.narrow(0, batch_start, batch_end - batch_start)
-      loss = model.loss(train_embeddings_narrow, train_y_true_narrow, regularize=regularize, l=5.)
+      loss = model.loss(train_embeddings_narrow, train_y_true_narrow, regularize=regularize)
 
       # update gradients
       optimizer.zero_grad()

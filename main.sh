@@ -26,7 +26,7 @@ clusterDir="data/medium_clusters.npy"  # path to clustering results
 # ConceptSHAP arguments
 numConcepts=2
 conceptSHAPModelDir="conceptSHAP/models"  # saving directory for conceptSHAP model
-logDir="conceptSHAP/logs2"
+logDir="conceptSHAP/logs"
 lr=1e-3
 numEpochs=50
 lossRegEpoch=10  # number of epochs to run without loss regularization
