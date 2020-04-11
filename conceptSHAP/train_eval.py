@@ -9,7 +9,8 @@ from tensorboardX import SummaryWriter
 from pathlib import Path
 
 from interpretConcepts import eval_clusters, eval_concepts
-import os
+
+# DEBUG
 import IPython
 e = IPython.embed
 
@@ -31,7 +32,7 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
   clusters = torch.from_numpy(clusters).to(device)
   train_embeddings = torch.from_numpy(train_embeddings).to(device)
   train_y_true = torch.from_numpy(train_y_true).to(device)
-  model = ConceptNet(clusters, h_x, n_concepts).cuda()
+  model = ConceptNet(clusters, h_x, n_concepts).to(device)
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
   log_dir = Path(args.log_dir)
@@ -111,13 +112,7 @@ if __name__ == "__main__":
   parser.add_argument('--save_interval', type=int, default=5)
   args = parser.parse_args()
 
-  if torch.cuda.is_available():
-    device = torch.device('cuda')
-    devicename = '[' + torch.cuda.get_device_name(0) + ']'
-  else:
-    device = torch.device('cpu')
-    devicename = ""
-
+  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
   ###############################
   # Preparing data

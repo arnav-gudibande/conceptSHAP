@@ -5,11 +5,11 @@ import argparse
 
 def generate_clusters(path, num_clusters):
 
-    # load embeddings from file
+    print("loading embeddings...")
     embeddings = np.load(path) # embeddings.shape = (4012, 768)
 
-    # run k-means clustering
-    clusters = KMeans(n_clusters=num_clusters)
+    print("running k-means...")
+    clusters = KMeans(n_clusters=num_clusters, n_jobs=-1)
     clusters.fit(embeddings)
     cluster_labels = clusters.labels_
 
@@ -21,8 +21,7 @@ def generate_clusters(path, num_clusters):
     # save clusters
     clusters = [np.empty((0, embedding_dim)) for i in range(num_clusters)]
 
-    print(clusters[0].shape)
-
+    print("saving clusters...")
     for i in range(len(embeddings)):
         if len(clusters[cluster_labels[i]]) < num_sentences_per_cluster:
             clusters[cluster_labels[i]] = \
@@ -43,5 +42,6 @@ if __name__=="__main__":
                         help="number of concepts to generate")
     args = parser.parse_args()
 
+    print("generating clusters...")
     clusters = generate_clusters(args.activation_dir, args.n_clusters)
     np.save(args.cluster_dir, clusters)

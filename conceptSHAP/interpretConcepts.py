@@ -1,5 +1,9 @@
 import numpy as np
 
+# DEBUG
+import IPython
+e = IPython.embed
+
 def eval_clusters(clusters, activations, senti_list, df):
   # for loop: need refactor this part in future: not scaling well
   # find index of each vector in cluster, in the original activation list
@@ -62,13 +66,16 @@ def eval_concepts(concept_model, clusters, concept_idxs, activations, df):
     diff = np.abs(activations - concept)
     distance = np.linalg.norm(diff, axis=1) # shape (dataset_size,)
 
-    k = 20 # number of nearest neighbours to choose
+    k = 5 # number of nearest neighbours to choose
     near_idxs = distance.argsort()[:k]  # take first k when ranking from smallest dist to largest
 
     print("top", k, " nearest neighbours of concept", concept_idx)
+    polarity=0
     for idx in near_idxs:
       s = list2str(df["sentence"][idx])
+      polarity += df["polarity"][idx]
       print(s)
+    print("avg polarity: " + str(polarity/k))
 
   return concepts, corr
 

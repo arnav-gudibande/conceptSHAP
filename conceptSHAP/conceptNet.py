@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# DEBUG
+import IPython
+e = IPython.embed
+
 class ConceptNet(nn.Module):
 
     def __init__(self, clusters, h_x, n_concepts):
@@ -9,23 +13,20 @@ class ConceptNet(nn.Module):
         super(ConceptNet, self).__init__()
 
         # note: clusters.shape = (num_clusters, num_sentences_per_cluster, embedding_dim)
-        # Tony(1): one caveat here is that different clusters might have different num_sentences_per_cluster,
-        # it holds in their case but not sure about our k-means. We might need to manually enforce this by truncation
         embedding_dim = clusters.shape[2]
 
-        self.clusters = nn.Parameter(torch.tensor(clusters))
-        self.clusters.requires_grad = False
+        self.clusters = nn.Parameter(clusters, requires_grad=False)
 
         # random init using uniform dist
-        self.concept = nn.Parameter(self.init_concept(embedding_dim, n_concepts), requires_grad=True) # the trainable concept
+        self.concept = nn.Parameter(self.init_concept(embedding_dim, n_concepts), requires_grad=True)
 
-        self.h_x = h_x # final layers of the transformer # Tony(3): make sure weights are frozen
+        self.h_x = h_x # final layers of the transformer
         self.n_concepts = n_concepts
 
-    def init_concept(self, n_concepts, embedding_dim):
+    def init_concept(self, embedding_dim, n_concepts):
         r_1 = -0.5
         r_2 = 0.5
-        concept = (r_2 - r_1) * torch.rand(n_concepts, embedding_dim) + r_1
+        concept = (r_2 - r_1) * torch.rand(embedding_dim, n_concepts) + r_1
         return concept
 
     def forward(self, train_embedding):
@@ -33,34 +34,29 @@ class ConceptNet(nn.Module):
         :param train_embedding: shape (bs, embedding_dim)
         :return:
         """
-        concept_normalized = F.normalize(self.concept, p=2, dim=0)
+
+        concept_normalized = F.normalize(self.concept, p=2, dim=0) # (embedding_dim x n_concepts)
 
         # calculating projection of train_embedding onto the concept vector space
-        eye = torch.eye(self.n_concepts).cuda() * 1e-5
-        # first_half_proj_matrix = torch.dot(self.concept, torch.inverse(torch.dot(torch.t(self.concept), self.concept) + eye))
-        first_half_proj_matrix = self.concept @ torch.inverse( (self.concept.T @ self.concept) + eye) # Tony
-
-        # proj = torch.dot(torch.dot(train_embedding, first_half_proj_matrix), torch.t(self.concept))
-        proj = (train_embedding @ first_half_proj_matrix) @ self.concept.T
+        proj_matrix = (self.concept @ torch.inverse((self.concept.T @ self.concept))) \
+                      @ self.concept.T # (embedding_dim x embedding_dim)
+        proj = proj_matrix @ train_embedding.T # (embedding_dim x batch_size)
 
         # calculating the saliency score between the concept and the cluster
-        # score_numerator = torch.dot(torch.mean(self.clusters, dim=1), concept_normalized)
+        cluster_mean = torch.mean(self.clusters, dim=1).type(concept_normalized.dtype) # (n_clusters x embedding_dim)
+        score_matrix = torch.abs(cluster_mean @ concept_normalized) # (n_clusters x n_concepts)
+        score_norm = F.normalize(score_matrix, p=2, dim=0) # (n_clusters x n_concepts)
+        score_norm_2 = torch.pow(score_norm, 2).fill_diagonal_(0)
 
-        score_numerator = torch.mean(self.clusters, dim=1).type(concept_normalized.dtype) @ concept_normalized
+        # score_flat = torch.reshape(score_norm, (-1,)) # ((n_clusters * n_concepts) x 1)
+        # saliency_score = score_flat.T @ score_flat
 
-
-
-        score_numerator_normalized = torch.sub(score_numerator, torch.mean(score_numerator, dim=1, keepdim=True))
-        score_abs = torch.abs(F.normalize(score_numerator_normalized, p=2, dim=0)) # cov0_abs
-        score_flat = torch.reshape(score_abs, (-1, self.n_concepts))
-
-        # saliency_score = torch.dot(torch.t(score_flat), score_flat) # cov
-        saliency_score = score_flat.T @ score_flat
+        L_sparse_1, L_sparse_2 = torch.sum(score_norm), torch.sum(score_norm_2)
 
         # passing projected activations through rest of model
-        y_pred = self.h_x(proj)
+        y_pred = self.h_x(proj.T)
 
-        return y_pred, saliency_score, score_abs # all the stuff that will be used to calculate the loss
+        return y_pred, L_sparse_1, L_sparse_2
 
     def loss(self, train_embedding, train_y_true, regularize=False, l=5.):
         """
@@ -71,15 +67,15 @@ class ConceptNet(nn.Module):
         :param l: lambda weights
         :return:
         """
-        y_pred, saliency_score, score_abs = self.forward(train_embedding)
+        y_pred, L_sparse_1, L_sparse_2 = self.forward(train_embedding)
 
         loss = nn.CrossEntropyLoss()
         loss_val_list = loss(y_pred, train_y_true)
         loss_val = torch.mean(loss_val_list)
 
         if regularize:
-            reg_loss_1 = torch.mean(saliency_score - torch.eye(self.n_concepts).cuda())
-            reg_loss_2 = torch.mean(score_abs)
-            return loss_val + l * (reg_loss_1 + reg_loss_2)
+            # reg_loss_1 = torch.mean(saliency_score - torch.eye(self.n_concepts))
+            # reg_loss_2 = torch.mean(score_abs)
+            return loss_val + l * (L_sparse_1 + L_sparse_2)
         else:
             return loss_val
