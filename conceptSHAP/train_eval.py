@@ -8,13 +8,13 @@ import argparse
 from tensorboardX import SummaryWriter
 from pathlib import Path
 
-from interpretConcepts import eval_clusters, eval_concepts
+from interpretConcepts import eval_clusters, eval_concepts, plot_embeddings
 
 # DEBUG
 import IPython
 e = IPython.embed
 
-def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, device):
+def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, writer, device):
   '''
   :param train_embeddings: tensor of sentence embeddings => (# of examples, embedding_dim)
   :param train_y_true: the ground truth label for each of the embeddings => (# of examples)
@@ -35,14 +35,12 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
   model = ConceptNet(clusters, h_x, n_concepts).to(device)
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
-  log_dir = Path(args.log_dir)
-  log_dir.mkdir(exist_ok=True, parents=True)
   optimizer = torch.optim.Adam(model.parameters(), lr=lr)
   train_size = train_embeddings.shape[0]
   loss_reg_epoch = args.loss_reg_epoch
-  writer = SummaryWriter(log_dir=str(log_dir))
   losses = []
 
+  n_iter = 0
   for i in tqdm(range(epochs)):
     if i < loss_reg_epoch:
       regularize = False
@@ -52,8 +50,9 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
     batch_start = 0
     batch_end = batch_size
 
-    while batch_end < train_size:
 
+    while batch_end < train_size:
+      n_iter+=1
       # generate training batch
       train_embeddings_narrow = train_embeddings.narrow(0, batch_start, batch_end - batch_start)
       train_y_true_narrow = train_y_true.narrow(0, batch_start, batch_end - batch_start)
@@ -64,7 +63,8 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
       loss.backward()
       optimizer.step()
 
-      writer.add_scalar('concept_loss', loss.item(), i+1)
+      # logging
+      writer.add_scalar('concept_loss', loss.data.item(), n_iter)
 
       # model saving
       if (i + 1) % save_interval == 0:
@@ -78,7 +78,6 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, devic
       batch_start += batch_size
       batch_end += batch_size
 
-  writer.close()
   return model, losses
 
 
@@ -114,10 +113,12 @@ if __name__ == "__main__":
 
   device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+  # init tensorboard
+  writer = SummaryWriter()
+
   ###############################
   # Preparing data
   ###############################
-  # Load assets
   print("Loading dataset embeddings...")
   small_activations = np.load(args.activation_dir)
   print("Shape: " + str(small_activations.shape))
@@ -127,11 +128,8 @@ if __name__ == "__main__":
   print("Shape: " + str(small_clusters.shape))
 
   print("Loading dataset labels...")
-  small_df = pd.read_pickle(args.train_dir)
-  small_df["polarity"] = small_df.shape[0] * [0]
-  senti_list = list(small_df["polarity"])
-  senti_list = [1 if i == "positive" else 0 for i in senti_list]
-  senti_list = np.array(senti_list)
+  data_frame = pd.read_pickle(args.train_dir)
+  senti_list = np.array(data_frame['polarity'])
 
   print("Loading model weights...")
   bert_model = BertForSequenceClassification.from_pretrained(args.bert_weights)
@@ -153,22 +151,19 @@ if __name__ == "__main__":
   # n_concepts
   n_concepts = args.n_concepts  # param
 
-  # data_frame
-  data_frame = small_df
-
-
   ###############################
   # Training model
   ###############################
   # init training
-  concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, device)
+  concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, writer, device)
 
   ###############################
   # Interpretation of results
   ###############################
-  # evaluate clusters
-  #cluster_sentiments = eval_clusters(clusters, train_embeddings, train_y_true, data_frame)
+  # plot activations / clusters / concepts
+  plot_embeddings(concept_model, clusters, train_embeddings, data_frame, senti_list, writer)
 
   # evaluate concepts
   concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
   concepts, saliency = eval_concepts(concept_model, clusters, concept_idxs, train_embeddings, data_frame)
+  writer.close()

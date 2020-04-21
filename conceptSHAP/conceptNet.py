@@ -34,7 +34,6 @@ class ConceptNet(nn.Module):
         :param train_embedding: shape (bs, embedding_dim)
         :return:
         """
-
         concept_normalized = F.normalize(self.concept, p=2, dim=0) # (embedding_dim x n_concepts)
 
         # calculating projection of train_embedding onto the concept vector space
@@ -48,6 +47,7 @@ class ConceptNet(nn.Module):
         score_norm = F.normalize(score_matrix, p=2, dim=0) # (n_clusters x n_concepts)
 
         L_sparse_1 = torch.sum(score_norm)  # maximize this
+        # Notes: try to optimize this part, since L_sparse_1 will also be small if none of the concepts are salient
         L_sparse_2 = 0 # minimize this
 
         for i in range(self.n_concepts):
@@ -62,7 +62,7 @@ class ConceptNet(nn.Module):
 
         return y_pred, L_sparse_1, L_sparse_2
 
-    def loss(self, train_embedding, train_y_true, regularize=False, l_1=5, l_2=5):
+    def loss(self, train_embedding, train_y_true, regularize=False, l_1=5., l_2=5.):
         """
         This function will be called externally to feed data and get the loss
         :param train_embedding:

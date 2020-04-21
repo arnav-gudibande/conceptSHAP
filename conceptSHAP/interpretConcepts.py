@@ -66,7 +66,7 @@ def eval_concepts(concept_model, clusters, concept_idxs, activations, df):
     diff = np.abs(activations - concept)
     distance = np.linalg.norm(diff, axis=1) # shape (dataset_size,)
 
-    k = 5 # number of nearest neighbours to choose
+    k = 10 # number of nearest neighbours to choose
     near_idxs = distance.argsort()[:k]  # take first k when ranking from smallest dist to largest
 
     print("top", k, " nearest neighbours of concept", concept_idx)
@@ -78,6 +78,20 @@ def eval_concepts(concept_model, clusters, concept_idxs, activations, df):
     print("avg polarity: " + str(polarity/k))
 
   return concepts, corr
+
+def plot_embeddings(concept_model, clusters, train_activations, train_data, senti_list, writer):
+  concepts = concept_model.concept.detach().cpu().numpy()
+  cluster_means = np.mean(clusters, axis=1)
+
+  # plot training activations
+  NUM_PLOT=10000
+  sentences = [(senti_list[i], ' '.join(train_data.iloc[i]['sentence'])) for i in range(0, NUM_PLOT)]
+
+  # plot clusters & concepts
+  embed_met = sentences + ["cluster " + str(i) for i in range(len(cluster_means))] + \
+              ["concept " + str(i) for i in range(concepts.shape[1])]
+  embed = np.vstack((train_activations[:NUM_PLOT], cluster_means, np.transpose(concepts)))
+  writer.add_embedding(embed, metadata=embed_met, tag="embeddings")
 
 ### Utils
 
