@@ -188,6 +188,6 @@ if __name__ == "__main__":
   plot_embeddings(concept_model, clusters, train_embeddings, data_frame, senti_list, writer)
 
   # evaluate concepts
-  concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
-  concepts, saliency = eval_concepts(concept_model, clusters, concept_idxs, train_embeddings, data_frame)
+  #concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
+  #concepts, saliency = eval_concepts(concept_model, clusters, concept_idxs, train_embeddings, data_frame)
   writer.close()

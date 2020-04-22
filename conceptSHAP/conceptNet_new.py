@@ -61,8 +61,8 @@ class ConceptNet_New(nn.Module):
 
         # passing projected activations through rest of model
 
-        # y_pred = self.h_x(proj.T)
-        y_pred = self.h_x(train_embedding)
+        y_pred = self.h_x(proj.T)
+        # y_pred = self.h_x(train_embedding)
 
 
 
@@ -90,7 +90,6 @@ class ConceptNet_New(nn.Module):
         L_sparse_1_new = L_sparse_1_new / self.n_concepts
 
         ### calculate Second regularization term
-        e()
         all_concept_dot = self.concept.T @ self.concept
         mask = torch.eye(self.n_concepts).cuda() * -1 + 1 # mask the i==j positions
         L_sparse_2_new = torch.mean(all_concept_dot * mask)
@@ -114,12 +113,12 @@ class ConceptNet_New(nn.Module):
         ce_loss = nn.CrossEntropyLoss()
         loss_val_list = ce_loss(y_pred, train_y_true)
         pred_loss = torch.mean(loss_val_list)
-        print(pred_loss)
+        #print(pred_loss)
 
         if regularize:
             # reg_loss_1 = torch.mean(saliency_score - torch.eye(self.n_concepts))
             # reg_loss_2 = torch.mean(score_abs)
-            final_loss = pred_loss + (l_1 * L_sparse_1_new * -1) + (l_2 * L_sparse_2)
+            final_loss = pred_loss + (l_1 * L_sparse_1_new * -1) + (l_2 * L_sparse_2_new)
         else:
             final_loss = pred_loss
 

@@ -24,14 +24,14 @@ n_clusters=20
 clusterDir="data/medium_clusters.npy"  # path to clustering results
 
 # ConceptSHAP arguments
-numConcepts=5
+numConcepts=2
 conceptSHAPModelDir="conceptSHAP/models"  # saving directory for conceptSHAP model
 logDir="conceptSHAP/logs"
 lr=1e-3
 numEpochs=50
 lossRegEpoch=10  # number of epochs to run without loss regularization
 saveInterval=500
-batchSizeTraining=2048
+batchSizeTraining=8000
 
 # Read command line running option
 # six option flags available: 1 for "data preprocess", 2 for "BERT model training",

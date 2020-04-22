@@ -13,7 +13,7 @@ numEpochs="${10}"
 lossRegEpoch="${11}"
 saveInterval="${12}"
 
-python3 conceptSHAP/train_eval.py \
+python3 conceptSHAP/train_eval_new.py \
     --activation_dir="$activationDir" \
     --cluster_dir="$clusterDir" \
     --train_dir="$trainDir" \
