@@ -69,10 +69,7 @@ class ConceptNet_New(nn.Module):
         ###### Calculate the regularization terms in second version of paper
         # new parameters
         k = 10
-
-
         ### calculate first regularization term
-
         # 1. find the top k nearest neighbour
         all_concept_knns = []
         for concept_idx in range(self.n_concepts):
@@ -92,8 +89,16 @@ class ConceptNet_New(nn.Module):
             L_sparse_1_new += dot_prod
         L_sparse_1_new = L_sparse_1_new / self.n_concepts
 
+        ### calculate Second regularization term
+        e()
+        all_concept_dot = self.concept.T @ self.concept
+        mask = torch.eye(self.n_concepts).cuda() * -1 + 1 # mask the i==j positions
+        L_sparse_2_new = torch.mean(all_concept_dot * mask)
 
-        return y_pred, L_sparse_1_old, L_sparse_2_old, L_sparse_1_new
+
+
+
+        return y_pred, L_sparse_1_old, L_sparse_2_old, L_sparse_1_new, L_sparse_2_new
 
     def loss(self, train_embedding, train_y_true, regularize=False, l_1=5., l_2=5.):
         """
@@ -104,7 +109,7 @@ class ConceptNet_New(nn.Module):
         :param l: lambda weights
         :return:
         """
-        y_pred, L_sparse_1_old, L_sparse_2, L_sparse_1_new = self.forward(train_embedding)
+        y_pred, L_sparse_1_old, L_sparse_2, L_sparse_1_new, L_sparse_2_new = self.forward(train_embedding)
 
         ce_loss = nn.CrossEntropyLoss()
         loss_val_list = ce_loss(y_pred, train_y_true)
