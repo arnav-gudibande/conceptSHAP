@@ -84,7 +84,7 @@ def plot_embeddings(concept_model, clusters, train_activations, train_data, sent
   cluster_means = np.mean(clusters, axis=1)
 
   # plot training activations
-  NUM_PLOT=10000
+  NUM_PLOT=1000
   sentences = [(senti_list[i], ' '.join(train_data.iloc[i]['sentence'])) for i in range(0, NUM_PLOT)]
 
   # plot clusters & concepts

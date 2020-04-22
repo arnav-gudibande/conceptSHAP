@@ -7,7 +7,9 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import argparse
+import torch.nn as nn
 import IPython
+e = IPython.embed
 
 device = torch.device('cuda')
 
@@ -18,7 +20,9 @@ device = torch.device('cuda')
 
 def load_data(PATH):
   small_df = pd.read_pickle(PATH)
-  small_df["polarity"] = small_df.shape[0] * [0] 
+  labels = list(small_df["label"])
+  polarity = [0 if l=="positive"  else 1 for l in labels]
+  small_df["polarity"] = polarity
   return small_df
 
 
@@ -28,8 +32,10 @@ def load_data(PATH):
 
 def load_model(PATH):
 
-  config = BertConfig.from_pretrained(PATH + "/config.json", output_hidden_states=True)
-  bert_model = BertForSequenceClassification.from_pretrained(PATH + "/pytorch_model.bin", config=config)
+  # config = BertConfig.from_pretrained(PATH + "/config.json", output_hidden_states=True)
+  # bert_model = BertForSequenceClassification.from_pretrained(PATH + "/pytorch_model.bin", config=config)
+  bert_model = BertForSequenceClassification.from_pretrained(PATH) # ../model/imdb_weights
+
 
   # possibly redundant
   bert_model.cuda()
@@ -68,9 +74,9 @@ def process_dataframe(_dframe, _tokenizer, batch_size):
     seq_mask = [float(i>0) for i in seq]
     amasks.append(seq_mask)
  
-  inputs_reformatted = torch.tensor(ids)
-  labels_reformatted = torch.tensor(labels)
-  masks_reformatted = torch.tensor(amasks)
+  inputs_reformatted = torch.tensor(ids).cuda()
+  labels_reformatted = torch.tensor(labels).cuda()
+  masks_reformatted = torch.tensor(amasks).cuda()
 
   data = TensorDataset(inputs_reformatted, masks_reformatted, labels_reformatted)
   sampler = SequentialSampler(data)
@@ -85,15 +91,20 @@ def process_dataframe(_dframe, _tokenizer, batch_size):
 # OUT: side effects
 
 def run_model(_model, loader):
+  ce_loss = nn.CrossEntropyLoss()
 
+  all_losses = []
   for batch in tqdm(loader):
-    batch = tuple(t.to(device) for t in batch)
     b_input_ids, b_input_mask, b_labels = batch
-
+    # print(torch.sum(b_labels).item())
     # outputs doesn't need to be saved
     with torch.no_grad():
-        outputs = _model(b_input_ids, token_type_ids=None,
+        logits, = _model(b_input_ids, token_type_ids=None,
                         attention_mask=b_input_mask)
+        loss_val_list = ce_loss(logits, b_labels)
+        pred_loss = torch.mean(loss_val_list).item()
+        all_losses.append(pred_loss)
+  print("inference loss:", np.mean(np.array(all_losses)))
 
 
 """Notice here: the function above added a forward hook to "layer_idx" layer of our model. You might want to google "register_forward_hook" to fully understand it but in short, everytime something is fed into the model and through the layer we specified, the function "extract_activation_hook" will get called. And "extract_activation_hook" will save the layer output to EXTRACTED_ACTIVATIONS when RECORD is true."""

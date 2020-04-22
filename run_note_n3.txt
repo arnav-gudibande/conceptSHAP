@@ -2,7 +2,7 @@ cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project
 source venv/bin/activate
 
 cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/conceptSHAP
-CUDA_VISIBLE_DEVICES=2 python3 train_eval.py \
+CUDA_VISIBLE_DEVICES=0 python3 train_eval_new.py \
     --activation_dir="../data/medium_activations.npy" \
     --cluster_dir="../data/medium_clusters.npy" \
     --train_dir="../data/medium_sentences.pkl" \
@@ -18,8 +18,39 @@ CUDA_VISIBLE_DEVICES=2 python3 train_eval.py \
 
 
 cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/model
-CUDA_VISIBLE_DEVICES=1 python3 bert_inference.py \
+CUDA_VISIBLE_DEVICES=3 python3 bert_inference.py \
     --batch_size=256 \
     --activation_dir="../data/medium_activations_speed_test.npy" \
     --train_dir="../data/medium_sentences.pkl" \
     --bert_weights="imdb_weights"
+
+
+
+
+# small
+
+
+cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/model
+CUDA_VISIBLE_DEVICES=3 python3 bert_inference.py \
+    --batch_size=256 \
+    --activation_dir="../data/small_activations.npy" \
+    --train_dir="../data/small_sentences.pkl" \
+    --bert_weights="imdb_weights"
+
+
+
+
+cd /home/tonyzhaozh/mlab/tony-intuit-project/intuit-project/conceptSHAP
+CUDA_VISIBLE_DEVICES=1 python3 train_eval_new.py \
+    --activation_dir="../data/small_activations.npy" \
+    --cluster_dir="../data/small_clusters.npy" \
+    --train_dir="../data/small_sentences.pkl" \
+    --bert_weights="../model/imdb_weights" \
+    --n_concepts=5 \
+    --save_dir="./experiments" \
+    --log_dir="./logs" \
+    --lr=1e-3 \
+    --batch_size=32 \
+    --num_epochs=20 \
+    --loss_reg_epoch=5 \
+    --save_interval=50
