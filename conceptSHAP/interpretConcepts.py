@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 # DEBUG
 import IPython
@@ -107,3 +108,29 @@ def print_cluster(df, clusters_idx, which_cluster, n=20):
     s = list2str(df["sentence"][idx])
     print(idx, s)
   print("\n")
+
+
+def completeness_score(X, concept, phi, h):
+    """
+    :param X: tensor input w/ dim (batch_size, num_features)
+    :param concept: tensor input for concept matrix w/ dim (embedding_dim, n_concepts)
+    :param phi: first half of the transformer
+    :param h: last layer of the transformer
+    :return: the n2 completeness score for this set of concepts `concept` on given data `X`
+    """
+    embeddings = phi(X)  # batch_size * embedding_dim
+    out = h(embeddings).detach().cpu().numpy()  # batch_size * out_dim
+
+    proj_matrix = (concept @ torch.inverse((concept.T @ concept))) @ concept.T
+    P = proj_matrix @ embeddings.T  # embedding_dim * batch_size
+    diff = h(embeddings - P.T).detach().cpu().numpy()  # batch_size * out_dim
+
+    def var(M):
+        """
+        :param M: matrix M w/ dtype as numpy.ndarray
+        :return: variance of the input matrix
+        """
+        mean = np.mean(M, axis=0)
+        return np.sum(np.diag((M - mean) @ (M - mean).T))
+
+    return 1 - var(diff) / var(out)

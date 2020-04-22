@@ -41,7 +41,7 @@ class ConceptNet_New(nn.Module):
         # calculating projection of train_embedding onto the concept vector space
         proj_matrix = (self.concept @ torch.inverse((self.concept.T @ self.concept))) \
                       @ self.concept.T # (embedding_dim x embedding_dim)
-        proj = proj_matrix @ train_embedding.T # (embedding_dim x batch_size)
+        proj = proj_matrix @ train_embedding.T  # (embedding_dim x batch_size)
 
         # calculating the saliency score between the concept and the cluster
         cluster_mean = torch.mean(self.clusters, dim=1).type(concept_normalized.dtype) # (n_clusters x embedding_dim)
