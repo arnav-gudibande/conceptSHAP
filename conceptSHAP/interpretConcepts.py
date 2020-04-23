@@ -130,7 +130,11 @@ def completeness_score(X, concept, phi, h):
         :param M: matrix M w/ dtype as numpy.ndarray
         :return: variance of the input matrix
         """
-        mean = np.mean(M, axis=0)
-        return np.sum(np.diag((M - mean) @ (M - mean).T))
+        sample_matrix = M.T  # transpose the matrix to get dim (out_dim, batch_size)
+        mean = np.mean(sample_matrix, axis=1)
+        normalized_sample = sample_matrix - mean
+
+        cov = normalized_sample @ normalized_sample.T
+        return np.sum(np.diag(cov))  # return the trace of covariance matrix
 
     return 1 - var(diff) / var(out)
