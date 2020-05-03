@@ -35,10 +35,10 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, write
   train_embeddings = torch.from_numpy(train_embeddings).to(device)
   train_y_true = torch.from_numpy(train_y_true).to(device)
 
+  for p in list(h_x.parameters()):
+    p.requires_grad = False
 
-  model = ConceptNet_New(clusters, h_x, n_concepts, train_embeddings).to(device)
-
-
+  model = ConceptNet_New(clusters, n_concepts, train_embeddings).to(device)
 
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
@@ -70,7 +70,7 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, write
       # generate training batch
       train_embeddings_narrow = permuted_train_embeddings.narrow(0, batch_start, batch_end - batch_start)
       train_y_true_narrow = permuted_train_y_true.narrow(0, batch_start, batch_end - batch_start)
-      final_loss, pred_loss, l1, l2 = model.loss(train_embeddings_narrow, train_y_true_narrow, regularize=regularize)
+      final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow, train_y_true_narrow, h_x, regularize=regularize)
 
       # update gradients
       optimizer.zero_grad()
@@ -82,7 +82,7 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, write
       writer.add_scalar('pred_loss', pred_loss.data.item(), n_iter)
       writer.add_scalar('L1', l1.data.item(), n_iter)
       writer.add_scalar('L2', l2.data.item(), n_iter)
-
+      writer.add_scalar('norm_metrics', metrics[0].data.item(), n_iter)
 
       # model saving
       if (i + 1) % save_interval == 0:
