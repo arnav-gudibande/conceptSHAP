@@ -90,7 +90,7 @@ def plot_embeddings(concept_model, clusters, train_activations, train_data, sent
 
   # plot clusters & concepts
   embed_met = sentences + ["cluster " + str(i) for i in range(len(cluster_means))] + \
-              ["concept " + str(i) for i in range(concepts.shape[1])]
+              ["concept_" + str(i) for i in range(concepts.shape[1])]
   embed = np.vstack((train_activations[:NUM_PLOT], cluster_means, np.transpose(concepts)))
   writer.add_embedding(embed, metadata=embed_met, tag="embeddings")
 
