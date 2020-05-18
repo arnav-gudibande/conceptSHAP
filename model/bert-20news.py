@@ -218,7 +218,7 @@ model.cuda()
 #
 # We also need to grab the training parameters from the pretrained model.
 
-EPOCHS = 4
+EPOCHS = 40
 WEIGHT_DECAY = 0.01
 LR = 2e-5
 WARMUP_STEPS =int(0.2*len(train_dataloader))
