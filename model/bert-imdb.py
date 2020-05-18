@@ -173,8 +173,7 @@ if __name__ == "__main__":
 
     BERTMODEL = "bert-base-uncased"
 
-    tokenizer = BertTokenizer.from_pretrained(BERTMODEL,
-                                              do_lower_case=True)
+    tokenizer = BertTokenizer.from_pretrained(BERTMODEL, do_lower_case=True)
 
     tokenized_train = [tokenizer.tokenize(s) for s in sentences_train]
     tokenized_test = [tokenizer.tokenize(s) for s in sentences_test]
