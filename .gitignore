@@ -154,3 +154,5 @@ conceptsSHAP/logs
 conceptSHAP/logs
 conceptSHAP/experiments
 runs
+model/news_weights
+*.png

@@ -31,7 +31,7 @@ def make_sliding_window_pkl(size, dir, savedir):
             windows.append(sliding_window)
             labels.append(label)
 
-    d = {"sentences": windows, "label": labels}
+    d = {"sentence": windows, "polarity": labels}
     pd.DataFrame.from_dict(d).to_pickle(savedir)
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ import argparse
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import IPython
 
 # LEARNING
 # Let's now define functions to train() and evaluate() the model:
@@ -64,8 +64,8 @@ def train(epoch, loss_vector=None, log_interval=200):
     loss.backward()
 
     # Update weights
-    scheduler.step()
     optimizer.step()
+    scheduler.step()
 
     if step % log_interval == 0:
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -156,14 +156,14 @@ if __name__ == "__main__":
     # The token `[CLS]` is a special token required by BERT at the
     # beginning of the sentence.
 
-    sentences_train = train_df.sentence.values
+    sentences_train = train_df.news.values
     sentences_train = ["[CLS] " + s for s in sentences_train]
 
-    sentences_test = test_df.sentence.values
+    sentences_test = test_df.news.values
     sentences_test = ["[CLS] " + s for s in sentences_test]
 
-    labels_train = train_df.polarity.values
-    labels_test = test_df.polarity.values
+    labels_train = train_df.label.values
+    labels_test = test_df.label.values
 
     print("\nThe first training sentence:")
     print(sentences_train[0], 'LABEL:', labels_train[0])
@@ -224,6 +224,9 @@ if __name__ == "__main__":
         seq_mask = [float(i > 0) for i in seq]
         amasks_test.append(seq_mask)
 
+    print("\nFirst training embedding with attention masks")
+    print(amasks_train[0])
+
     # We use scikit-learn's train_test_split() to use 10% of our training
     # data as a validation set, and then convert all data into
     # torch.tensors.
@@ -237,13 +240,13 @@ if __name__ == "__main__":
                               random_state=42, test_size=0.1)
 
     train_inputs = torch.tensor(train_inputs)
-    train_labels = torch.tensor(train_labels)
+    train_labels = torch.tensor(train_labels.astype('int64'))
     train_masks = torch.tensor(train_masks)
     validation_inputs = torch.tensor(validation_inputs)
-    validation_labels = torch.tensor(validation_labels)
+    validation_labels = torch.tensor(validation_labels.astype('int64'))
     validation_masks = torch.tensor(validation_masks)
     test_inputs = torch.tensor(ids_test)
-    test_labels = torch.tensor(labels_test)
+    test_labels = torch.tensor(labels_test.astype('int64'))
     test_masks = torch.tensor(amasks_test)
 
     # Next we create PyTorch *DataLoader*s for all data sets.
@@ -284,7 +287,7 @@ if __name__ == "__main__":
     # classification layer added on top.
 
     model = BertForSequenceClassification.from_pretrained(BERTMODEL,
-                                                          num_labels=2)
+                                                          num_labels=20)
     model.cuda()
     print('\nPretrained BERT model "{}" loaded'.format(BERTMODEL))
 
@@ -303,7 +306,7 @@ if __name__ == "__main__":
 
     EPOCHS = 4
     WEIGHT_DECAY = 0.01
-    LR = 2e-5
+    LR = 3e-5
     WARMUP_STEPS = int(0.2 * len(train_dataloader))
 
     no_decay = ['bias', 'LayerNorm.weight']
