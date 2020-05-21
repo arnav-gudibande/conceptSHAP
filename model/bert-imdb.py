@@ -306,7 +306,7 @@ if __name__ == "__main__":
 
     EPOCHS = 4
     WEIGHT_DECAY = 0.01
-    LR = 3e-5
+    LR = 3e-4
     WARMUP_STEPS = int(0.2 * len(train_dataloader))
 
     no_decay = ['bias', 'LayerNorm.weight']

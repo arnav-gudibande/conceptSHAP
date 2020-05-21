@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 import torch
+from collections import Counter
 
 # DEBUG
 import IPython
@@ -80,19 +82,21 @@ def eval_concepts(concept_model, clusters, concept_idxs, activations, df):
 
   return concepts, corr
 
-def plot_embeddings(concept_model, clusters, train_activations, train_data, senti_list, writer):
-  concepts = concept_model.concept.detach().cpu().numpy()
-  cluster_means = np.mean(clusters, axis=1)
+def plot_embeddings(train_activations, train_data, senti_list, writer):
+  concepts = np.load('conceptSHAP/concepts.npy')
 
   # plot training activations
   NUM_PLOT=10000
   sentences = [(senti_list[i], ' '.join(train_data.iloc[i]['sentence'])) for i in range(0, NUM_PLOT)]
 
   # plot clusters & concepts
-  embed_met = sentences + ["cluster " + str(i) for i in range(len(cluster_means))] + \
-              ["concept_" + str(i) for i in range(concepts.shape[1])]
-  embed = np.vstack((train_activations[:NUM_PLOT], cluster_means, np.transpose(concepts)))
+  embed_met = sentences + ["concept_" + str(i) for i in range(concepts.shape[1])]
+  embed = np.vstack((train_activations[:NUM_PLOT], np.transpose(concepts)))
   writer.add_embedding(embed, metadata=embed_met, tag="embeddings")
+
+def save_concepts(concept_model):
+  concepts = concept_model.concept.detach().cpu().numpy()
+  np.save('conceptSHAP/concepts.npy', concepts)
 
 ### Utils
 
@@ -110,7 +114,7 @@ def print_cluster(df, clusters_idx, which_cluster, n=20):
   print("\n")
 
 
-def completeness_score(X, concept, phi, h):
+def completeness_score(conceptModel, train_activations, X, concept, phi, h):
     """
     :param X: tensor input w/ dim (batch_size, num_features)
     :param concept: tensor input for concept matrix w/ dim (embedding_dim, n_concepts)
@@ -138,3 +142,33 @@ def completeness_score(X, concept, phi, h):
         return np.sum(np.diag(cov))  # return the trace of covariance matrix
 
     return 1 - var(diff) / var(out)
+
+def concept_analysis(concepts, train_embeddings, train_data):
+    # concepts: (n_concepts, dim)
+    # train_embeddings: (n_embeddings, dim)
+    # train_data: df => (n_sentences, label)
+
+    concepts = torch.from_numpy(concepts)
+    train_embeddings = torch.from_numpy(train_embeddings)
+
+    i = 0
+    for concept in concepts:
+        i+=1
+        distance = torch.norm(train_embeddings - concept, dim=0)
+        knn = distance.topk(150, largest=False).indices
+
+        words = []
+        for idx in knn:
+          words += train_data.iloc[int(idx)]['sentence']
+
+        cx = Counter(words)
+        most_occur = cx.most_common(25)
+        print("Concept " + str(i) + " most common words:")
+        print(most_occur)
+        print("\n")
+
+if __name__=="__main__":
+    ## Concept Analysis
+    concept_analysis(np.transpose(np.load('conceptSHAP/concepts.npy')),
+                     np.load('data/large_news.npy'),
+                     pd.read_pickle('data/news_tr_sentences.pkl'))

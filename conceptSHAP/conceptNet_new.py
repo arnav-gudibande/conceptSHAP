@@ -8,14 +8,12 @@ e = IPython.embed
 
 class ConceptNet_New(nn.Module):
 
-    def __init__(self, clusters, n_concepts, train_embeddings):
+    def __init__(self, n_concepts, train_embeddings):
 
         super(ConceptNet_New, self).__init__()
-        # note: clusters.shape = (num_clusters, num_sentences_per_cluster, embedding_dim)
-        embedding_dim = clusters.shape[2]
+        embedding_dim = train_embeddings.shape[1]
         # random init using uniform dist
         self.concept = nn.Parameter(self.init_concept(embedding_dim, n_concepts), requires_grad=True)
-        self.clusters = nn.Parameter(clusters, requires_grad=False)
         self.n_concepts = n_concepts
         self.train_embeddings = train_embeddings.transpose(0, 1) # (dim, all_data_size)
 
@@ -29,28 +27,10 @@ class ConceptNet_New(nn.Module):
         """
         train_embedding: shape (bs, embedding_dim)
         """
-        concept_normalized = F.normalize(self.concept, p=2, dim=0) # (embedding_dim x n_concepts)
-
         # calculating projection of train_embedding onto the concept vector space
         proj_matrix = (self.concept @ torch.inverse((self.concept.T @ self.concept))) \
                       @ self.concept.T # (embedding_dim x embedding_dim)
         proj = proj_matrix @ train_embedding.T  # (embedding_dim x batch_size)
-
-        # calculating the saliency score between the concept and the cluster
-        cluster_mean = torch.mean(self.clusters, dim=1).type(concept_normalized.dtype) # (n_clusters x embedding_dim)
-        score_matrix = torch.abs(cluster_mean @ concept_normalized) # (n_clusters x n_concepts)
-        score_norm = F.normalize(score_matrix, p=2, dim=0) # (n_clusters x n_concepts)
-
-        L_sparse_1_old = torch.sum(score_norm)  # maximize this
-        # Notes: try to optimize this part, since L_sparse_1 will also be small if none of the concepts are salient
-        L_sparse_2_old = 0 # minimize this
-
-        for i in range(self.n_concepts):
-            for j in range(self.n_concepts):
-                if i != j: L_sparse_2_old += torch.dot(score_norm[:, i], score_norm[:, j])
-
-        # score_flat = torch.reshape(score_norm, (-1,)) # ((n_clusters * n_concepts) x 1)
-        # saliency_score = score_flat.T @ score_flat
 
         # passing projected activations through rest of model
         y_pred = h_x(proj.T)
@@ -95,7 +75,7 @@ class ConceptNet_New(nn.Module):
 
         norm_metrics = torch.mean(all_concept_dot * torch.eye(self.n_concepts).cuda())
 
-        return y_pred, L_sparse_1_old, L_sparse_2_old, L_sparse_1_new, L_sparse_2_new, [norm_metrics]
+        return y_pred, L_sparse_1_new, L_sparse_2_new, [norm_metrics]
 
 
     def loss(self, train_embedding, train_y_true, h_x, regularize=False, l_1=5., l_2=5.):
@@ -106,16 +86,13 @@ class ConceptNet_New(nn.Module):
         l_1 = 1/1000
         l_2 = 1/500 # it is important to MAKE SURE L2 GOES DOWN! that will let concepts separate from each other
 
-        y_pred, L_sparse_1_old, L_sparse_2, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x)
+        y_pred, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x)
 
         ce_loss = nn.CrossEntropyLoss()
         loss_val_list = ce_loss(y_pred, train_y_true)
         pred_loss = torch.mean(loss_val_list)
-        #print(pred_loss)
 
         if regularize:
-            # reg_loss_1 = torch.mean(saliency_score - torch.eye(self.n_concepts))
-            # reg_loss_2 = torch.mean(score_abs)
             final_loss = pred_loss + (l_1 * L_sparse_1_new * -1) + (l_2 * L_sparse_2_new)
         else:
             final_loss = pred_loss

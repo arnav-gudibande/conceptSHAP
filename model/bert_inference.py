@@ -75,7 +75,7 @@ def process_dataframe(_dframe, _tokenizer, batch_size):
     amasks.append(seq_mask)
  
   inputs_reformatted = torch.tensor(ids).cuda()
-  labels_reformatted = torch.tensor(labels).cuda()
+  labels_reformatted = torch.tensor(labels.astype('int64')).cuda()
   masks_reformatted = torch.tensor(amasks).cuda()
 
   data = TensorDataset(inputs_reformatted, masks_reformatted, labels_reformatted)
@@ -120,7 +120,7 @@ MAX_LEN_TRAIN, MAX_LEN_TEST = 128, 512
 
 def get_sentence_activation(DATAPATH, MODELPATH, batch_size):
 
-  sentence_df = load_data(DATAPATH)
+  sentence_df = pd.read_pickle(DATAPATH)
 
   model, tokenizer = load_model(MODELPATH)
 

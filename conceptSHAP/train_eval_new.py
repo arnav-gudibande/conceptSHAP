@@ -9,14 +9,14 @@ from tensorboardX import SummaryWriter
 from pathlib import Path
 from transformers import BertTokenizer, BertConfig
 
-from interpretConcepts import eval_clusters, eval_concepts, plot_embeddings
+from interpretConcepts import eval_clusters, eval_concepts, plot_embeddings, save_concepts
 import os
 
 # DEBUG
 import IPython
 e = IPython.embed
 
-def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, writer, device):
+def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device):
   '''
   :param train_embeddings: tensor of sentence embeddings => (# of examples, embedding_dim)
   :param train_y_true: the ground truth label for each of the embeddings => (# of examples)
@@ -31,14 +31,13 @@ def train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, write
   batch_size = args.batch_size
   epochs = args.num_epochs
   save_interval = args.save_interval
-  clusters = torch.from_numpy(clusters).to(device)
   train_embeddings = torch.from_numpy(train_embeddings).to(device)
-  train_y_true = torch.from_numpy(train_y_true).to(device)
+  train_y_true = torch.from_numpy(train_y_true.astype('int64')).to(device)
 
   for p in list(h_x.parameters()):
     p.requires_grad = False
 
-  model = ConceptNet_New(clusters, n_concepts, train_embeddings).to(device)
+  model = ConceptNet_New(n_concepts, train_embeddings).to(device)
 
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
@@ -106,8 +105,6 @@ if __name__ == "__main__":
   # Required dependencies
   parser.add_argument("--activation_dir", type=str, required=True,
                       help="path to .npy file containing dataset embeddings")
-  parser.add_argument("--cluster_dir", type=str, required=True,
-                      help="path to .npy file containing embedding clusters")
   parser.add_argument("--train_dir", type=str, required=True,
                       help="path to .pkl file containing train dataset")
   parser.add_argument("--bert_weights", type=str, required=True,
@@ -122,9 +119,9 @@ if __name__ == "__main__":
                       help='directory to save the log')
   parser.add_argument('--lr', type=float, default=1e-3)
   parser.add_argument('--batch_size', type=int, default=32)
-  parser.add_argument('--loss_reg_epoch', type=int, default=5,
+  parser.add_argument('--loss_reg_epoch', type=int, default=2,
                       help="num of epochs to run without loss regularization")
-  parser.add_argument('--num_epochs', type=int, default=20,
+  parser.add_argument('--num_epochs', type=int, default=3,
                       help="num of training epochs")
   parser.add_argument('--save_interval', type=int, default=5)
   args = parser.parse_args()
@@ -140,10 +137,6 @@ if __name__ == "__main__":
   print("Loading dataset embeddings...")
   small_activations = np.load(args.activation_dir)
   print("Shape: " + str(small_activations.shape))
-
-  print("Loading clusters...")
-  small_clusters = np.load(args.cluster_dir)
-  print("Shape: " + str(small_clusters.shape))
 
   print("Loading dataset labels...")
   data_frame = pd.read_pickle(args.train_dir)
@@ -163,9 +156,6 @@ if __name__ == "__main__":
   # get the embedding numpy array, convert to tensor
   train_embeddings = small_activations  # (4012, 768)
 
-  # get the cluster numpy array
-  clusters = small_clusters
-
   # get ground truth label
   train_y_true = senti_list
 
@@ -179,13 +169,17 @@ if __name__ == "__main__":
   # Training model
   ###############################
   # init training
-  concept_model, loss = train(args, train_embeddings, train_y_true, clusters, h_x, n_concepts, writer, device)
+  concept_model, loss = train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
 
   ###############################
   # Interpretation of results
   ###############################
+
+  # save concepts
+  save_concepts(concept_model)
+
   # plot activations / clusters / concepts
-  plot_embeddings(concept_model, clusters, train_embeddings, data_frame, senti_list, writer)
+  plot_embeddings(train_embeddings, data_frame, senti_list, writer)
 
   # evaluate concepts
   #concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now

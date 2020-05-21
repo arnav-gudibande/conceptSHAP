@@ -62,6 +62,6 @@ fi
 if [ $option -eq 5 ] || [ $option -eq 0 ] || [ $option -eq 6 ]; then
     # Rest of conceptSHAP
     # TODO: SSH to server port (TensorBoard) to plot the training curve
-    sh conceptSHAP/train_eval_new.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
+    sh conceptSHAP/train_eval.sh $activationDir $clusterDir $trainDir $modelDir $numConcepts \
         $conceptSHAPModelDir $logDir $lr $batchSizeTraining $numEpochs $lossRegEpoch $saveInterval
 fi
