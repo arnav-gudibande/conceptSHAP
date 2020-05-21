@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from itertools import chain, combinations
 # DEBUG
 import IPython
+import numpy as np
+import math
 e = IPython.embed
 
 class ConceptNet_New(nn.Module):
@@ -34,6 +36,7 @@ class ConceptNet_New(nn.Module):
 
         # passing projected activations through rest of model
         y_pred = h_x(proj.T)
+        orig_pred = h_x(train_embedding)
 
         ###### Calculate the regularization terms in second version of paper
         # new parameters
@@ -75,10 +78,9 @@ class ConceptNet_New(nn.Module):
 
         norm_metrics = torch.mean(all_concept_dot * torch.eye(self.n_concepts).cuda())
 
-        return y_pred, L_sparse_1_new, L_sparse_2_new, [norm_metrics]
+        return orig_pred, y_pred, L_sparse_1_new, L_sparse_2_new, [norm_metrics]
 
-
-    def loss(self, train_embedding, train_y_true, h_x, regularize=False, l_1=5., l_2=5.):
+    def loss(self, train_embedding, train_y_true, h_x, regularize=False, doConceptSHAP=False, l_1=5., l_2=5.):
         """
         This function will be called externally to feed data and get the loss
         """
@@ -86,15 +88,65 @@ class ConceptNet_New(nn.Module):
         l_1 = 1/1000
         l_2 = 1/500 # it is important to MAKE SURE L2 GOES DOWN! that will let concepts separate from each other
 
-        y_pred, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x)
+        orig_pred, y_pred, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x)
 
         ce_loss = nn.CrossEntropyLoss()
-        loss_val_list = ce_loss(y_pred, train_y_true)
-        pred_loss = torch.mean(loss_val_list)
+        loss_new = ce_loss(y_pred, train_y_true)
+        pred_loss = torch.mean(loss_new)
+
+        # completeness score
+        def n(y_pred):
+            orig_correct = torch.sum(train_y_true == torch.argmax(orig_pred, axis=1))
+            new_correct = torch.sum(train_y_true == torch.argmax(y_pred, axis=1))
+            return torch.div(new_correct, orig_correct)
+
+        completeness = n(y_pred)
+
+        conceptSHAP = []
+        if doConceptSHAP:
+            def proj(concept):
+                proj_matrix = (concept @ torch.inverse((concept.T @ concept))) \
+                              @ concept.T  # (embedding_dim x embedding_dim)
+                proj = proj_matrix @ train_embedding.T  # (embedding_dim x batch_size)
+
+                # passing projected activations through rest of model
+                return h_x(proj.T)
+
+            # shapley score
+            c_id = np.asarray(list(range(len(self.concept.T))))
+            for idx in c_id:
+                exclude = np.delete(c_id, idx)
+                subsets = np.asarray(self.powerset(list(exclude)))
+                sum = 0
+                for subset in subsets:
+                    # score 1:
+                    c1 = subset + [idx]
+                    concept = np.take(self.concept.T.detach().cpu().numpy(), np.asarray(c1), axis=0)
+                    concept = torch.from_numpy(concept).T
+                    pred = proj(concept.cuda())
+                    score1 = n(pred)
+
+                    # score 2:
+                    c1 = subset
+                    concept = np.take(self.concept.T.detach().cpu().numpy(), np.asarray(c1), axis=0)
+                    concept = torch.from_numpy(concept).T
+                    pred = proj(concept.cuda())
+                    score2 = n(pred)
+
+                    norm = (math.factorial(len(c_id) - len(subset) - 1) * math.factorial(len(subset))) / \
+                           math.factorial(len(c_id))
+                    sum +=  norm * (score1.data.item() - score2.data.item())
+                conceptSHAP.append(sum)
 
         if regularize:
             final_loss = pred_loss + (l_1 * L_sparse_1_new * -1) + (l_2 * L_sparse_2_new)
         else:
             final_loss = pred_loss
 
-        return final_loss, pred_loss, L_sparse_1_new, L_sparse_2_new, metrics
+        return completeness, conceptSHAP, final_loss, pred_loss, L_sparse_1_new, L_sparse_2_new, metrics
+
+    def powerset(self, iterable):
+        "powerset([1,2,3]) --> [1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]]"
+        s = list(iterable)
+        pset = chain.from_iterable(combinations(s, r) for r in range(1, len(s) + 1))
+        return [list(i) for i in list(pset)]

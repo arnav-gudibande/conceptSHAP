@@ -7,10 +7,8 @@ from tqdm import tqdm
 import argparse
 from tensorboardX import SummaryWriter
 from pathlib import Path
-from transformers import BertTokenizer, BertConfig
 
-from interpretConcepts import eval_clusters, eval_concepts, plot_embeddings, save_concepts
-import os
+from interpretConcepts import plot_embeddings, save_concepts, concept_analysis
 
 # DEBUG
 import IPython
@@ -30,7 +28,7 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
   lr = args.lr
   batch_size = args.batch_size
   epochs = args.num_epochs
-  save_interval = args.save_interval
+  cal_interval = args.save_interval
   train_embeddings = torch.from_numpy(train_embeddings).to(device)
   train_y_true = torch.from_numpy(train_y_true.astype('int64')).to(device)
 
@@ -69,8 +67,15 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
       # generate training batch
       train_embeddings_narrow = permuted_train_embeddings.narrow(0, batch_start, batch_end - batch_start)
       train_y_true_narrow = permuted_train_y_true.narrow(0, batch_start, batch_end - batch_start)
-      final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow, train_y_true_narrow, h_x, regularize=regularize)
-
+      if (n_iter + 1) % cal_interval == 0:
+        completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
+                                                                                       train_y_true_narrow, h_x,
+                                                                                       regularize=regularize,
+                                                                                       doConceptSHAP=True)
+      else:
+        completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
+                                                                                       train_y_true_narrow, h_x,
+                                                                                       regularize=regularize)
       # update gradients
       optimizer.zero_grad()
       final_loss.backward()
@@ -82,14 +87,10 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
       writer.add_scalar('L1', l1.data.item(), n_iter)
       writer.add_scalar('L2', l2.data.item(), n_iter)
       writer.add_scalar('norm_metrics', metrics[0].data.item(), n_iter)
-
-      # model saving
-      if (i + 1) % save_interval == 0:
-          state_dict = model.state_dict()
-          for key in state_dict.keys():
-              state_dict[key] = state_dict[key].to(torch.device('cpu'))
-              torch.save(state_dict, save_dir /
-                     'conceptNet_iter_{:d}.pth'.format(i + 1))
+      writer.add_scalar('concept completeness', completeness.data.item(), n_iter)
+      if conceptSHAP != []:
+        print(np.asarray(conceptSHAP))
+        writer.add_histogram('conceptSHAP', np.asarray(conceptSHAP), n_iter)
 
       # update batch indices
       batch_start += batch_size
@@ -140,13 +141,7 @@ if __name__ == "__main__":
 
   print("Loading dataset labels...")
   data_frame = pd.read_pickle(args.train_dir)
-
-  if 'polarity' in data_frame.keys():
-    senti_list = np.array(data_frame['polarity'])
-  else:
-    senti_list = np.array(data_frame['label'])
-    senti_list = np.array([0 if s == 'positive' else 1 for s in senti_list])
-
+  senti_list = np.array(data_frame['polarity'])
 
   print("Loading model weights...")
   bert_model = BertForSequenceClassification.from_pretrained(args.bert_weights) # ../model/imdb_weights
@@ -181,7 +176,7 @@ if __name__ == "__main__":
   # plot activations / clusters / concepts
   plot_embeddings(train_embeddings, data_frame, senti_list, writer)
 
-  # evaluate concepts
-  #concept_idxs = list(range(n_concepts)) # the concepts of interest, set to all now
-  #concepts, saliency = eval_concepts(concept_model, clusters, concept_idxs, train_embeddings, data_frame)
+  # eval concepts
+  concept_analysis(small_activations, data_frame)
+
   writer.close()
