@@ -89,7 +89,7 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
       writer.add_scalar('norm_metrics', metrics[0].data.item(), n_iter)
       writer.add_scalar('concept completeness', completeness.data.item(), n_iter)
       if conceptSHAP != []:
-        print(np.asarray(conceptSHAP))
+        print(np.asarray(conceptSHAP), sum(np.asarray(conceptSHAP)))
         writer.add_histogram('conceptSHAP', np.asarray(conceptSHAP), n_iter)
 
       # update batch indices

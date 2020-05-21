@@ -98,7 +98,7 @@ class ConceptNet_New(nn.Module):
         def n(y_pred):
             orig_correct = torch.sum(train_y_true == torch.argmax(orig_pred, axis=1))
             new_correct = torch.sum(train_y_true == torch.argmax(y_pred, axis=1))
-            return torch.div(new_correct, orig_correct)
+            return torch.div(new_correct - (1/self.n_concepts), orig_correct - (1/self.n_concepts))
 
         completeness = n(y_pred)
 
@@ -128,14 +128,16 @@ class ConceptNet_New(nn.Module):
 
                     # score 2:
                     c1 = subset
-                    concept = np.take(self.concept.T.detach().cpu().numpy(), np.asarray(c1), axis=0)
-                    concept = torch.from_numpy(concept).T
-                    pred = proj(concept.cuda())
-                    score2 = n(pred)
+                    if c1 != []:
+                        concept = np.take(self.concept.T.detach().cpu().numpy(), np.asarray(c1), axis=0)
+                        concept = torch.from_numpy(concept).T
+                        pred = proj(concept.cuda())
+                        score2 = n(pred)
+                    else: score2 = torch.tensor(0)
 
                     norm = (math.factorial(len(c_id) - len(subset) - 1) * math.factorial(len(subset))) / \
                            math.factorial(len(c_id))
-                    sum +=  norm * (score1.data.item() - score2.data.item())
+                    sum += norm * (score1.data.item() - score2.data.item())
                 conceptSHAP.append(sum)
 
         if regularize:
@@ -148,5 +150,5 @@ class ConceptNet_New(nn.Module):
     def powerset(self, iterable):
         "powerset([1,2,3]) --> [1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]]"
         s = list(iterable)
-        pset = chain.from_iterable(combinations(s, r) for r in range(1, len(s) + 1))
+        pset = chain.from_iterable(combinations(s, r) for r in range(0, len(s) + 1))
         return [list(i) for i in list(pset)]
