@@ -7,6 +7,7 @@ from tqdm import tqdm
 import argparse
 from tensorboardX import SummaryWriter
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 from interpretConcepts import plot_embeddings, save_concepts, concept_analysis
 
@@ -63,11 +64,10 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
     permuted_train_y_true = data_pair[:, -1].long()
 
     while batch_end < train_size:
-      n_iter+=1
       # generate training batch
       train_embeddings_narrow = permuted_train_embeddings.narrow(0, batch_start, batch_end - batch_start)
       train_y_true_narrow = permuted_train_y_true.narrow(0, batch_start, batch_end - batch_start)
-      if (n_iter + 1) % cal_interval == 0:
+      if (n_iter) % cal_interval == 0:
         completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
                                                                                        train_y_true_narrow, h_x,
                                                                                        regularize=regularize,
@@ -89,12 +89,14 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
       writer.add_scalar('norm_metrics', metrics[0].data.item(), n_iter)
       writer.add_scalar('concept completeness', completeness.data.item(), n_iter)
       if conceptSHAP != []:
-        print(np.asarray(conceptSHAP), sum(np.asarray(conceptSHAP)))
-        writer.add_histogram('conceptSHAP', np.asarray(conceptSHAP), n_iter)
+        fig = plt.figure()
+        plt.bar(list(range(len(conceptSHAP))), conceptSHAP)
+        writer.add_figure('conceptSHAP', fig, n_iter)
 
       # update batch indices
       batch_start += batch_size
       batch_end += batch_size
+      n_iter += 1
 
   return model, losses
 
