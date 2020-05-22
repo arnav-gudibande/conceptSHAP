@@ -79,6 +79,7 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
         completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
                                                                                        train_y_true_narrow, h_x,
                                                                                        regularize=regularize,
+                                                                                       doConceptSHAP=False,
                                                                                        l_1=l_1, l_2=l_2, topk=topk)
       # update gradients
       optimizer.zero_grad()
