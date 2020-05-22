@@ -26,10 +26,12 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
   '''
 
   # training parameters
-  lr = args.lr
+  l_1 = args.l1
+  l_2 = args.l2
+  topk = args.topk
   batch_size = args.batch_size
   epochs = args.num_epochs
-  cal_interval = args.save_interval
+  cal_interval = args.shapley_interval
   train_embeddings = torch.from_numpy(train_embeddings).to(device)
   train_y_true = torch.from_numpy(train_y_true.astype('int64')).to(device)
 
@@ -40,7 +42,7 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
 
   save_dir = Path(args.save_dir)
   save_dir.mkdir(exist_ok=True, parents=True)
-  optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+  optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
   train_size = train_embeddings.shape[0]
   loss_reg_epoch = args.loss_reg_epoch
   losses = []
@@ -71,11 +73,13 @@ def train(args, train_embeddings, train_y_true, h_x, n_concepts, writer, device)
         completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
                                                                                        train_y_true_narrow, h_x,
                                                                                        regularize=regularize,
-                                                                                       doConceptSHAP=True)
+                                                                                       doConceptSHAP=True,
+                                                                                       l_1=l_1, l_2=l_2, topk=topk)
       else:
         completeness, conceptSHAP, final_loss, pred_loss, l1, l2, metrics = model.loss(train_embeddings_narrow,
                                                                                        train_y_true_narrow, h_x,
-                                                                                       regularize=regularize)
+                                                                                       regularize=regularize,
+                                                                                       l_1=l_1, l_2=l_2, topk=topk)
       # update gradients
       optimizer.zero_grad()
       final_loss.backward()
@@ -120,13 +124,15 @@ if __name__ == "__main__":
                       help='directory to save the model')
   parser.add_argument('--log_dir', default='./logs',
                       help='directory to save the log')
-  parser.add_argument('--lr', type=float, default=1e-3)
+  parser.add_argument('--l1', type=float, default=.001)
+  parser.add_argument('--l2', type=float, default=.002)
+  parser.add_argument('--topk', type=int, default=10)
   parser.add_argument('--batch_size', type=int, default=32)
   parser.add_argument('--loss_reg_epoch', type=int, default=2,
                       help="num of epochs to run without loss regularization")
   parser.add_argument('--num_epochs', type=int, default=3,
                       help="num of training epochs")
-  parser.add_argument('--save_interval', type=int, default=5)
+  parser.add_argument('--shapley_interval', type=int, default=5)
   args = parser.parse_args()
 
   device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

@@ -25,7 +25,7 @@ class ConceptNet_New(nn.Module):
         concept = (r_2 - r_1) * torch.rand(embedding_dim, n_concepts) + r_1
         return concept
 
-    def forward(self, train_embedding, h_x):
+    def forward(self, train_embedding, h_x, topk):
         """
         train_embedding: shape (bs, embedding_dim)
         """
@@ -40,7 +40,7 @@ class ConceptNet_New(nn.Module):
 
         ###### Calculate the regularization terms in second version of paper
         # new parameters
-        k = 10 # TODO this param is NOT tuned yet, but it might be very important
+        k = topk # TODO this param is NOT tuned yet, but it might be very important
 
         ### calculate first regularization term, to be maximized
         # 1. find the top k nearest neighbour
@@ -80,15 +80,15 @@ class ConceptNet_New(nn.Module):
 
         return orig_pred, y_pred, L_sparse_1_new, L_sparse_2_new, [norm_metrics]
 
-    def loss(self, train_embedding, train_y_true, h_x, regularize=False, doConceptSHAP=False, l_1=5., l_2=5.):
+    def loss(self, train_embedding, train_y_true, h_x, regularize, doConceptSHAP, l_1, l_2, topk):
         """
         This function will be called externally to feed data and get the loss
         """
         # TODO hardcoded param: result is extremely sensitive to them
-        l_1 = 1/1000
-        l_2 = 1/500 # it is important to MAKE SURE L2 GOES DOWN! that will let concepts separate from each other
+        #l_1 = 1/1000
+        #l_2 = 1/500 # it is important to MAKE SURE L2 GOES DOWN! that will let concepts separate from each other
 
-        orig_pred, y_pred, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x)
+        orig_pred, y_pred, L_sparse_1_new, L_sparse_2_new, metrics = self.forward(train_embedding, h_x, topk)
 
         ce_loss = nn.CrossEntropyLoss()
         loss_new = ce_loss(y_pred, train_y_true)
