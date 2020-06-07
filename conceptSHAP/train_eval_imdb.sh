@@ -1,0 +1,11 @@
+python3 conceptSHAP/train_eval.py \
+    --activation_dir="data/imdb_embeddings.npy" \
+    --train_dir="data/imdb-fragments.pkl" \
+    --bert_weights="model/imdb_weights" \
+    --n_concepts=10 \
+    --num_epochs=10 \
+    --batch_size=64 \
+    --l1=.001 \
+    --l2=.002 \
+    --topk=10 \
+    --shapley_interval=1000

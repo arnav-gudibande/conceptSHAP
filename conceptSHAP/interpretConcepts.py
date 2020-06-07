@@ -1,11 +1,6 @@
 import numpy as np
-import pandas as pd
 import torch
 from collections import Counter
-
-# DEBUG
-import IPython
-e = IPython.embed
 
 def concept_analysis(train_embeddings, train_data):
     # concepts: (n_concepts, dim)
@@ -47,7 +42,3 @@ def save_concepts(concept_model):
   concepts = concept_model.concept.detach().cpu().numpy()
   np.save('conceptSHAP/concepts.npy', concepts)
 
-
-if __name__=="__main__":
-    ### Concept Analysis
-    concept_analysis(np.load('data/large_news.npy'), pd.read_pickle('data/news_tr_sentences.pkl'))

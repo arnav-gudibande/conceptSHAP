@@ -31,7 +31,6 @@ def download(directory):
 
 def make_sliding_window_pkl(size, dir, savedir):
   data = pd.read_pickle(dir)
-  #data['review'][0], see a review
   windows = []
   labels = []
 

@@ -57,10 +57,7 @@ def process_dataframe(_dframe, _tokenizer, batch_size):
   sentences = _dframe.sentence.values
   sentences = [["[CLS]"] + s for s in sentences]
   
-  labels = _dframe.polarity.values 
-
-  # tokenized = [_tokenizer.tokenize(s) for s in sentences]
-  # tokenized = [t[:(MAX_LEN_TRAIN-1)]+['SEP'] for t in tokenized]
+  labels = _dframe.polarity.values
 
   tokenized = [t[:(MAX_LEN_TRAIN-1)]+['SEP'] for t in sentences]
 

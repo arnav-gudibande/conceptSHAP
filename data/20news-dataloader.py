@@ -48,10 +48,17 @@ if __name__ == "__main__":
     run_option = args.run_option
 
     if run_option == 3:
-        save_train_data('news-train.pkl')
-        save_test_data('news-test.pkl')
+        save_train_data('data/news-train.pkl')
+        save_test_data('data/news-test.pkl')
         print("loaded & saved news files")
     elif run_option == 2:
-        make_sliding_window_pkl(args.size, 'news-train.pkl', args.train_dir)
-        make_sliding_window_pkl(args.size, 'news-test.pkl', args.test_dir)
+        make_sliding_window_pkl(args.size, 'data/news-train.pkl', args.train_dir)
+        make_sliding_window_pkl(args.size, 'data/news-test.pkl', args.test_dir)
+        print("saved fragment files")
+    else:
+        save_train_data('data/news-train.pkl')
+        save_test_data('data/news-test.pkl')
+        print("loaded & saved news files")
+        make_sliding_window_pkl(args.size, 'data/news-train.pkl', args.train_dir)
+        make_sliding_window_pkl(args.size, 'data/news-test.pkl', args.test_dir)
         print("saved fragment files")

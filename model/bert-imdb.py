@@ -156,14 +156,14 @@ if __name__ == "__main__":
     # The token `[CLS]` is a special token required by BERT at the
     # beginning of the sentence.
 
-    sentences_train = train_df.news.values
+    sentences_train = train_df.sentence.values
     sentences_train = ["[CLS] " + s for s in sentences_train]
 
-    sentences_test = test_df.news.values
+    sentences_test = test_df.sentence.values
     sentences_test = ["[CLS] " + s for s in sentences_test]
 
-    labels_train = train_df.label.values
-    labels_test = test_df.label.values
+    labels_train = train_df.polarity.values
+    labels_test = test_df.polarity.values
 
     print("\nThe first training sentence:")
     print(sentences_train[0], 'LABEL:', labels_train[0])

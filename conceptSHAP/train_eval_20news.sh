@@ -1,0 +1,12 @@
+python3 conceptSHAP/train_eval.py \
+    --activation_dir="data/large_news.npy" \
+    --train_dir="data/news_train_fragments.pkl" \
+    --bert_weights="model/news_weights" \
+    --n_concepts=20 \
+    --batch_size=64 \
+    --l1=.001 \
+    --l2=.002 \
+    --topk=10 \
+    --shapley_interval=2000 \
+    --loss_reg_epoch=3 \
+    --num_epochs=15
