@@ -32,7 +32,7 @@ Networks" https://arxiv.org/abs/1910.07969. This specific implementation applies
 
 #### 20NewsGroups Dataset
 * Download and format 20News: ```sh data/20news-dataloader.sh```
-* Train BERT model on 20News: ```sh model/bert-20news.sh```
+* Train BERT model on 20News: ```python3 model/bert-20news.py```
 * Generate and save BERT embeddings: ```sh model/bert-inference_20news.sh```
 * Run ConceptSHAP: ```sh conceptSHAP/train_eval_20news.sh```
 
