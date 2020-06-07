@@ -16,7 +16,7 @@ Networks" https://arxiv.org/abs/1910.07969. This specific implementation applies
     * ```bert_inference.py``` -- outputs embeddings generated from a trained transformer model for a target dataset
 * ```clustering```
     * ```generateClusters.py``` -- k-means clustering of output embeddings
-    * Note: this was discarded from the intitial conceptSHAP paper, but can be used to test how classical unsupervised methods compare to conceptSHAP
+    * Note: this was discarded from the intitial conceptSHAP paper, but can still be used to test classical unsupervised methods against conceptSHAP
 * ```conceptSHAP```
     * ```conceptNet.py``` -- trainable subclass that learns concepts
     * ```train_eval.py``` -- training script for ```conceptNet.py```
