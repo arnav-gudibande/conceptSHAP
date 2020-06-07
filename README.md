@@ -25,13 +25,13 @@ Networks" https://arxiv.org/abs/1910.07969. This specific implementation applies
 ## Example Usage
 
 #### IMDB Sentiment Dataset
-* Download and format IMDB Dataset: ```sh data/imdb-dataloder.sh```
+* Download and format IMDB Dataset: ```sh data/imdb-dataloader.sh```
 * Train BERT model on IMDB: ```sh model/bert-imdb.sh```
 * Generate and save BERT embeddings: ```sh model/bert-inference_imdb.sh```
 * Run ConceptSHAP: ```sh conceptSHAP/train_eval_imdb.sh```
 
 #### 20NewsGroups Dataset
-* Download and format 20News: ```sh data/20news-dataloder.sh```
+* Download and format 20News: ```sh data/20news-dataloader.sh```
 * Train BERT model on 20News: ```sh model/bert-20news.sh```
 * Generate and save BERT embeddings: ```sh model/bert-inference_20news.sh```
 * Run ConceptSHAP: ```sh conceptSHAP/train_eval_20news.sh```
