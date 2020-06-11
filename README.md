@@ -1,4 +1,4 @@
-This is an implementation for the paper "On Concept-Based Explanations in Deep Neural
+This is an implementation of the paper "On Concept-Based Explanations in Deep Neural
 Networks" https://arxiv.org/abs/1910.07969. This specific implementation applies the ConceptSHAP technique to BERT and other transformer-based language models via the [Huggingface Transformers](https://github.com/huggingface/transformers) library. This implementation was developed by members of [Machine Learning @ Berkeley](https://github.com/mlberkeley) for Intuit's Machine Learning Futures Group in Spring 2020.
 
 ## Installation & Requirements
